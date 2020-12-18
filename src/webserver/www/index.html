@@ -1,0 +1,72 @@
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Loci</title>
+    
+    <!-- Include 3rdparty libs we use to build a fancier GUI; ORDER MATTERS! -->
+    <script src="3rdparty/jquery-ui/external/jquery/jquery.js"></script>
+    <script src="3rdparty/jquery-ui/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="3rdparty/jquery-ui/jquery-ui.min.css">
+    <link rel="stylesheet" href="3rdparty/jquery-ui/jquery-ui.theme.min.css">
+    <link rel="stylesheet" href="3rdparty/jquery-ui/jquery-ui.structure.min.css">
+
+    <script src="3rdparty/worldwind-web/worldwind.min.js"></script>
+
+    <script src="3rdparty/split-pane.js"></script>
+    <link rel="stylesheet" href="3rdparty/split-pane.css">
+
+    
+    <!-- 3rdparty fixes -->
+    <link rel="stylesheet" href="fixes.css">
+
+    <!-- Include our own business logic -->
+    <script src="app.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- TODO remove -->
+    <meta http-equiv="refresh" content="16; URL='./'" />
+
+  </head>
+  <body onload="main();">
+    <ul id="menu">
+      <li><div>File</div>
+        <ul>
+          <li><div>Settings</div>
+            <ul>
+              <li><div>Cat 1</div></li>
+              <li><div>Cat 2</div></li>
+              <li><div>Cat 3</div></li>
+            </ul>
+          </li>
+          <li><div>Quit</div></li>
+        </ul>
+      </li>
+      <li><div>Edit</div>
+        <ul>
+          <li><div>Quit</div></li>
+        </ul>
+      </li>
+      <li><div>Help</div>
+        <ul>
+          <li><div>Documentation</div></li>
+          <li><div>License</div></li>
+          <li><div>About</div></li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="split-pane fixed-left">
+      <div class="split-pane-component" id="left-component">
+        This is the left component
+      </div>
+      <div class="split-pane-divider" id="my-divider"></div>
+      <div class="split-pane-component" id="right-component">
+        <canvas id="map0" class="map">
+          Your browser does not support HTML5 Canvas.
+        </canvas>
+
+      </div>
+    </div>
+
+  </body>
+</html>

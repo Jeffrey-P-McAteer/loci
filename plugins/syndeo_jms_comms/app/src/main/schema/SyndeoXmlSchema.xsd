@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:com:brandes:syndeo:mil-std-2045-47001" xmlns:devil="urn:com:brandes:syndeo:mil-std-2045-47001" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="Message">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="MessageId" type="devil:MessageIdType"/>
+				<xs:element name="MessageType" type="devil:MessageTypeType"/>
+				<xs:element name="MessageSubType" type="devil:MessageSubTypeType"/>
+				<xs:element name="Compression" type="devil:CompressionType"/>
+				<xs:element name="Subject" type="devil:SubjectType"/>
+				<xs:element name="From" type="devil:PLAType"/>
+				<xs:element name="DTG" type="devil:DTGType"/>
+				<xs:element name="PrecedenceTo" type="devil:PrecedenceType"/>
+				<xs:element name="PrecedenceCopy" type="devil:PrecedenceType"/>
+				<xs:element name="Classification" type="devil:ClassificationType"/>
+				<xs:element name="RecipientsTo" type="devil:RecipientsType"/>
+				<xs:element name="RecipientsCopy" type="devil:RecipientsType"/>
+				<xs:element name="Body" type="devil:BodyType"/>
+				<xs:element name="AttachmentList" type="devil:AttachmentListType" minOccurs="0"/>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="MessageTypeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Text"/>
+			<xs:enumeration value="Email"/>
+			<xs:enumeration value="File"/>
+			<xs:enumeration value="Binary"/>
+			<xs:enumeration value="VMF"/>
+			<xs:enumeration value="USMTF"/>
+			<xs:enumeration value="ADatP-3"/>
+			<xs:enumeration value="Mil-Std-2045-47001"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="MessageSubTypeType">
+		<xs:restriction base="xs:string"/>
+	</xs:simpleType>
+	<xs:simpleType name="ClassificationType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="UNCLASSIFIED"/>
+			<xs:enumeration value="UNCLASSIFIEDEFTO"/>
+			<xs:enumeration value="CLEAR"/>
+			<xs:enumeration value="CONFIDENTIAL"/>
+			<xs:enumeration value="RESTRICTED"/>
+			<xs:enumeration value="SECRET"/>
+			<xs:enumeration value="TOPSECRET"/>
+			<xs:enumeration value="NATOUNCLASSIFIED"/>
+			<xs:enumeration value="NATORESTRICTED"/>
+			<xs:enumeration value="NATOSECRET"/>
+			<xs:enumeration value="COSMICTOPSECRET"/>
+			<xs:enumeration value="UNKNOWN"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="PrecedenceType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value=""/>
+			<xs:enumeration value="ROUTINE"/>
+			<xs:enumeration value="PRIORITY"/>
+			<xs:enumeration value="IMMEDIATE"/>
+			<xs:enumeration value="FLASH"/>
+			<xs:enumeration value="ECP"/>
+			<xs:enumeration value="CRITIC"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="PLAType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="55"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="RecipientsType">
+		<xs:sequence>
+			<xs:element name="Recipient" type="devil:PLAType" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="MessageIdType">
+		<xs:restriction base="xs:string"/>
+	</xs:simpleType>
+	<xs:simpleType name="SubjectType">
+		<xs:restriction base="xs:string"/>
+	</xs:simpleType>
+	<xs:simpleType name="BodyType">
+		<xs:restriction base="xs:string"/>
+	</xs:simpleType>
+	<xs:simpleType name="DTGType">
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="14"/>
+			<xs:pattern value="|[0-9][0-9][0-9][0-9][0-9][0-9][Z][ ][A-Z][A-Z][A-Z][ ][0-9][0-9]"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="CompressionType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="None"/>
+			<xs:enumeration value="LZW"/>
+			<xs:enumeration value="GZIP"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="AttachmentListType">
+		<xs:sequence>
+			<xs:element ref="devil:Attachment" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="AttachmentType">
+		<xs:sequence>
+			<xs:element ref="devil:AttachmentName"/>
+			<xs:element ref="devil:AttachmentDescription" minOccurs="0"/>
+			<xs:element ref="devil:AttachmentSize"/>
+			<xs:element ref="devil:AttachmentData"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="AttachmentNameType">
+		<xs:simpleContent>
+			<xs:extension base="xs:string">
+				<xs:attribute ref="devil:mime-type" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<!-- Attributes -->
+	<xs:attribute name="composition">
+		<xs:annotation>
+			<xs:documentation>This is a set of colon delimited file extensions to show how the file was base 64 encoded.</xs:documentation>
+		</xs:annotation>
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:enumeration value="zip:base64"/>
+				<xs:enumeration value="base64"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:attribute>
+	<xs:attribute name="mime-type" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>The mime type of the attachment</xs:documentation>
+		</xs:annotation>
+	</xs:attribute>
+	<xs:attribute name="title">
+		<xs:annotation>
+			<xs:documentation>A Title for the Body part </xs:documentation>
+		</xs:annotation>
+	</xs:attribute>
+	<xs:element name="Attachment" type="devil:AttachmentType">
+		<xs:annotation>
+			<xs:documentation>The attachment and its metadata.  An attachment may have security markings.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="AttachmentName" type="devil:AttachmentNameType">
+		<xs:annotation>
+			<xs:documentation>The name of the attachment (please limit to 256 char).</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="AttachmentDescription" type="xs:string">
+		<xs:annotation>
+			<xs:documentation>A description of the attachment</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="AttachmentSize" type="xs:double">
+		<xs:annotation>
+			<xs:documentation>The size of the attachment in bytes</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="AttachmentLocation" type="xs:anyURI">
+		<xs:annotation>
+			<xs:documentation>The URI where the attachment can be found.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="AttachmentData">
+		<xs:annotation>
+			<xs:documentation>The attachment - base64 encoded.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:base64Binary">
+					<xs:attribute ref="devil:composition" use="required"/>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+
+</xs:schema>

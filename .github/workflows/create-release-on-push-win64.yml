@@ -1,0 +1,57 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release for Windows64
+
+jobs:
+  build:
+    name: Create Release for Windows64
+    runs-on: windows-latest
+    steps:
+      # See https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md
+      - name: Install dependencies
+        run: |
+          choco install -y cygwin
+          python -m pip install --user websocket_client requests py7zr
+          rustup toolchain install stable-x86_64-pc-windows-gnu
+          rustup target add x86_64-pc-windows-gnu
+          rustup default stable-x86_64-pc-windows-gnu
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build code
+        run: |
+          python -m build release
+
+      - name: Test code
+        run: |
+          python -m test
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}-win64
+          release_name: Release Windows64 ${{ github.ref }}
+          body: |
+            *Beep* This release was built by a bot. Have a nice day! *Beep*
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./target/release/loci.exe
+          asset_name: loci-win64.exe
+          asset_content_type: application/octet-stream
+

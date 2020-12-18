@@ -1,0 +1,68 @@
+[package]
+name = "loci"
+version = "0.1.0"
+authors = ["Jeffrey McAteer <jeffrey.mcateer@devil-tech.com>"]
+edition = "2018"
+build = "build.rs"
+
+[features]
+default = [ "embed-eapp-tar" ]
+
+# The embed-eapp-tar feature makes build.rs include
+# target/eapp_dir_<target>.tar.gz within the binary itself.
+# as the .tar.gz payload gets bigger the first limit we will hit is 2gb
+# in the windows PE32+ binary format, and to make the program work we
+# will disable this and ship the target/eapp_dir_<target>.tar.gz separately.
+# The subprograms/mod.rs code has conditional compile-time logic to
+# handle both embedding and searching CWD for the tarball.
+embed-eapp-tar = []
+
+
+[dependencies]
+crossbeam = "0.7"
+
+web-view = { version = "0.6", features = [] }
+
+actix-web-actors = "3.0"
+actix = "0.10.0"
+actix-web = { version = "3.0.0", default-features = false }
+actix-http = "2.0.0"
+actix-codec = "0.3.0"
+actix-rt = "1.1.1"
+
+mime_guess = "2.0"
+
+rust-embed="5.6.0"
+
+rusqlite = { version = "0.24", features = ["bundled"] }
+
+tar = "0.4"
+flate2 = "1.0"
+
+app_dirs = { package = "app_dirs2", version = "2" }
+
+shlex = "0.1"
+
+glob = "0.3"
+
+serde_json = "1.0"
+
+pgp = "0.7"
+
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+nix = "0.19.1"
+which = "3.1.0"
+signal-hook = "0.2"
+
+[target.x86_64-pc-windows-gnu.dependencies]
+winapi = {version = "0.3", features = ["wincon", "winuser"]}
+
+
+
+[build-dependencies]
+zip = "0.5.8"
+walkdir = "2"
+pathdiff = "0.2"
+cc = "1.0"
+
