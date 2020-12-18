@@ -77,6 +77,7 @@ pub fn has_licensed_feature(feature: &str) -> bool {
 pub fn get_licensed_features() -> String {
   use pgp::*;
   use std::io::Cursor;
+  use std::io::prelude::*;
 
   let mut features_s = String::new();
 
@@ -96,22 +97,58 @@ pub fn get_licensed_features() -> String {
     lic_txt = env_lic;
   }
 
-  // Verify lic_txt was signed by one of LICENSE_ISSUERS_KEYS
+  // Split license message & PGP signature
+  let chunks: Vec<&str> = lic_txt.split("-----END LICENSE MSG-----").collect();
 
-  let mut lic_txt_reader = Cursor::new(lic_txt.as_bytes());
+  if chunks.len() != 2 {
+    return features_s;
+  }
 
-  match Message::from_armor_single(&mut lic_txt_reader) {
-    Ok((msg, _)) => {
+  let msg_txt = chunks[0].replace("-----BEGIN LICENSE MSG-----", "");
+  let msg_txt = msg_txt.trim();
+  let sig_armor = chunks[1];
+  let sig_armor = sig_armor.trim();
+
+  println!("msg_txt={}", &msg_txt);
+  println!("sig_armor={}", &sig_armor);
+
+  // normalize msg_txt by splitting on whitespace and joining without:
+  let msg_txt: String = msg_txt.chars().filter(|c| !c.is_whitespace()).collect();
+
+  // Verify msg_txt was signed by one of LICENSE_ISSUERS_KEYS
+
+  let mut sig_armor_reader = Cursor::new(sig_armor.as_bytes());
+  
+  match Message::from_armor_single(&mut sig_armor_reader) {
+    Ok((mut msg, headers)) => {
+
+      println!("msg={:?}", msg);
+      println!("headers={:?}", headers);
+
+      if let Message::Signed{ref mut message, one_pass_signature: _, signature: _} = msg {
+        *message = Some(
+          Box::new( Message::Literal(packet::LiteralData::from_str("memory.txt", &msg_txt[..])) )
+        );
+      }
+
       for issuer_key in LICENSE_ISSUERS_KEYS.iter() {
         let mut issuer_key_reader = Cursor::new(issuer_key.as_bytes());
         match SignedPublicKey::from_armor_single(&mut issuer_key_reader) {
-          Ok((pkey, _)) => {
-            if let Ok(()) = msg.verify(&pkey) {
-              
-              // License is good, TODO return features / check expire dates and HWID?
+          Ok((pkey, headers)) => {
+            
+            println!("pkey={:?}", &pkey);
+            println!("headers={:?}", &headers);
 
-              features_s += "base,";
-              
+            match msg.verify(&pkey) {
+              Ok(()) => {
+                // License is good, TODO return features / check expire dates and HWID?
+
+                features_s += "base,";
+                
+              }
+              Err(e) => {
+                println!("verify e={}", e);
+              }
             }
           }
           Err(e) => {
@@ -125,6 +162,7 @@ pub fn get_licensed_features() -> String {
     }
   }
 
+  println!("features_s={}", &features_s);
 
   return features_s;
 }

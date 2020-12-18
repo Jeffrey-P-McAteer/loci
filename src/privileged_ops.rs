@@ -7,30 +7,36 @@
 
 use app_dirs;
 
-#[cfg(not(target_os = "windows"))]
 use std::{thread, time};
-
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-
-
-#[cfg(not(target_os = "windows"))]
 use std::process::Command;
 
-#[cfg(target_os = "windows")]
-use std::os::raw::c_ushort;
-
-// This is defined by build.rs for windows targets
-#[cfg(target_os = "windows")]
-extern "C" {
-  fn loci_win_is_administrator() -> bool;
-  fn rust_win_runas(cmd: *const c_ushort, args: *const c_ushort, show: i32) -> u32;
-}
 
 pub fn we_are_privileged() -> bool {
   #[cfg(target_os = "windows")]
   {
-    return unsafe { loci_win_is_administrator() };
+    let out = Command::new("whoami")
+      .arg("/priv")
+      .output()
+      .expect("Could not run whoami");
+
+    // The admin account has >5 lines and "SeCreateGlobalPrivilege" = Enabled.
+    // This is a heuristic check and may need to be changed if
+    // corporate domain accounts come into play.
+    match std::str::from_utf8(&out.stdout) {
+      Ok(out) => {
+        // This is a fairly soft check which may not be 100% accurate.
+        return out.contains("SeCreateGlobalPrivilege") && 
+               out.contains("SeImpersonatePrivilege");
+      }
+      Err(e) => {
+        println!("e={}", e);
+        return false;
+      }
+    }
+
+
   }
   #[cfg(not(target_os = "windows"))]
   {
@@ -70,101 +76,76 @@ pub fn elevate_privileges(loci_exit_f: Arc<AtomicBool>) {
       &eapp_dir[..], &db_file[..]
   ];
 
+  let mut child;
+
   #[cfg(target_os = "windows")]
   {
-    use std::ffi::OsStr;
-    use std::os::windows::ffi::OsStrExt;
-
-    // Silences a warning; TODO can the win32 API kill a process in here?
-    drop(loci_exit_f);
-
-    let mut params = String::new();
-    for arg in args.iter() {
-        params.push(' ');
-        if arg.len() == 0 {
-            params.push_str("\"\"");
-        } else if arg.find(&[' ', '\t', '"'][..]).is_none() {
-            params.push_str(&arg);
-        } else {
-            params.push('"');
-            for c in arg.chars() {
-                match c {
-                    '\\' => params.push_str("\\\\"),
-                    '"' => params.push_str("\\\""),
-                    c => params.push(c),
-                }
-            }
-            params.push('"');
-        }
+    // "powershell" is documented to always exist on windorks
+    let mut arglist = String::new();
+    for a in args.iter() {
+      arglist += &format!("'{}',", a)[..];
     }
+    // remove the last ","
+    arglist.pop();
 
-    let file = OsStr::new(&self_exe.to_string_lossy()[..])
-        .encode_wide()
-        .chain(Some(0))
-        .collect::<Vec<_>>();
-
-    let params = OsStr::new(&params)
-        .encode_wide()
-        .chain(Some(0))
-        .collect::<Vec<_>>();
-
-    unsafe {
-        let show = 1;
-        rust_win_runas(
-            file.as_ptr(),
-            params.as_ptr(),
-            show,
-        );
-    }
+    child = Command::new("powershell")
+      .arg("start")
+      .arg(&self_exe.to_string_lossy()[..])
+      .arg("-argumentlist")
+      .arg(&arglist[..])
+      .arg("-verb")
+      .arg("runas")
+      //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
+      .spawn()
+      .expect("Could not run admin b/c sub-process failed");
   }
 
 
   #[cfg(not(target_os = "windows"))]
   {
-    //use which;
-    let mut child;
     match which::which("gksudo") {
-        Ok(_) => {
-            child = Command::new("gksudo")
-              .arg("-E")
-              .arg("--")
-              .arg(&self_exe.to_string_lossy()[..])
-              .args(&args[..])
-              //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
-              .spawn()
-              .expect("Could not run admin b/c sub-process failed");
-        }
-        Err(_) => {
-            match which::which("sudo") {
-                Ok(_) => {
-                    child = Command::new("sudo")
-                      .arg("-E")
-                      .arg("--")
-                      .arg(&self_exe.to_string_lossy()[..])
-                      .args(&args[..])
-                      //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
-                      .spawn()
-                      .expect("Could not run admin b/c sub-process failed");
-                }
-                Err(_) => {
-                    panic!("Cannot run admin because no priv elevation programs exist on this system");
-                },
+      Ok(_) => {
+          child = Command::new("gksudo")
+            .arg("-E")
+            .arg("--")
+            .arg(&self_exe.to_string_lossy()[..])
+            .args(&args[..])
+            //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
+            .spawn()
+            .expect("Could not run admin b/c sub-process failed");
+      }
+      Err(_) => {
+        match which::which("sudo") {
+            Ok(_) => {
+                child = Command::new("sudo")
+                  .arg("-E")
+                  .arg("--")
+                  .arg(&self_exe.to_string_lossy()[..])
+                  .args(&args[..])
+                  //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
+                  .spawn()
+                  .expect("Could not run admin b/c sub-process failed");
             }
+            Err(_) => {
+                panic!("Cannot run admin because no priv elevation programs exist on this system");
+            },
         }
-    }
-
-    // Poll exit flag and kill child
-    loop {
-      thread::sleep(time::Duration::from_millis(200));
-      if loci_exit_f.load(std::sync::atomic::Ordering::SeqCst) {
-        if let Err(e) = child.kill() {
-          println!("error killing child: {:?}", e);
-        }
-        break;
       }
     }
-
   }
+
+
+  // Poll exit flag and kill child
+  loop {
+    thread::sleep(time::Duration::from_millis(200));
+    if loci_exit_f.load(std::sync::atomic::Ordering::SeqCst) {
+      if let Err(e) = child.kill() {
+        println!("error killing child: {:?}", e);
+      }
+      break;
+    }
+  }
+
 }
 
 

@@ -68,13 +68,14 @@ expire_timestamp={expire_timestamp}
     expire_timestamp=expire_timestamp,
   ).strip()
 
-  print(('-' * 6) + ' license_text ' + ('-' * 6))
+  print(('-' * 5) + 'BEGIN LICENSE MSG' + ('-' * 5))
   print(license_text)
-  print(('-' * 6) + ' license_text ' + ('-' * 6))
-  print('')
-  print('')
+  print(('-' * 5) + 'END LICENSE MSG' + ('-' * 5))
 
-  signed_license_text = gpg.sign(license_text, keyid=sign_key_id)
+  # normalization - we sign the text w/o whitespace
+  license_text = ''.join(license_text.split())
+
+  signed_license_text = gpg.sign(license_text, keyid=sign_key_id, clearsign=False, detach=True)
   print(signed_license_text)
 
   print('')

@@ -40,6 +40,9 @@ Relevant 3rdparty code: None
 `LOCI_NO_GUI`:
   - If set the main GUI is replaced with a `loop { }`, which makes testing and server demos easier.
 
+`LOCI_NO_ADMIN`:
+  - If set `loci` will not attempt to use admin privileges for anything. This will mostly affect radios which need admin privileges for communication.
+
 `LOCI_LICENSE_TXT`:
   - If a license file does not exist this will be checked for a PGP-signed license in `src/license.rs`.
 

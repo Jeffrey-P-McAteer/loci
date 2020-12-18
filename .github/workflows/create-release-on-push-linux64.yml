@@ -55,3 +55,11 @@ jobs:
           asset_name: loci-linux64
           asset_content_type: application/octet-stream
 
+      - name: Trim old releases
+        uses: dev-drprasad/delete-older-releases@v0.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          #repo: <owner>/<repoName> # defaults to current repo
+          keep_latest: 12
+

@@ -14,7 +14,17 @@ by running:
 
 ```bash
 python -m docs.build
+# To open your web browser to the built directory:
+python -m docs.build open
 ```
+
+This directory may also be pushed to Github Pages:
+
+```bash
+python -m docs.build publish
+```
+
+
 
 
 

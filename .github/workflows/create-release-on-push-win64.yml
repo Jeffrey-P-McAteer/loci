@@ -19,6 +19,7 @@ jobs:
           rustup toolchain install stable-x86_64-pc-windows-gnu
           rustup target add x86_64-pc-windows-gnu
           rustup default stable-x86_64-pc-windows-gnu
+          netsh advfirewall set allprofiles state off
 
       - name: Checkout code
         uses: actions/checkout@v2
@@ -55,3 +56,11 @@ jobs:
           asset_name: loci-win64.exe
           asset_content_type: application/octet-stream
 
+      - name: Trim old releases
+        uses: dev-drprasad/delete-older-releases@v0.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          #repo: <owner>/<repoName> # defaults to current repo
+          keep_latest: 12
+        

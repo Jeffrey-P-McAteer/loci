@@ -769,28 +769,47 @@ exec "$_RUNJAVA" $JAVA_OPTS $MARLIN_ENABLER -DGEOSERVER_DATA_DIR="$GEOSERVER_DAT
 
   println!("Executing: {}", &startup_script[..]);
 
+  let mut geoserver_data_dir = geoserver_home.clone();
+  geoserver_data_dir.push("data_dir"); // Default location in unzipped eapp dir
+
   let output = Command::new(&startup_script)
                 .current_dir(&geoserver_home.to_string_lossy()[..])
                 .env("GEOSERVER_HOME", &geoserver_home.to_string_lossy()[..])
+                .env("GEOSERVER_DATA_DIR", &geoserver_data_dir.to_string_lossy()[..])
                 .output()
                 .expect("failed to execute startup script");
 
   let stdout = String::from_utf8_lossy(&output.stdout);
   let stderr = String::from_utf8_lossy(&output.stderr);
 
-  println!("{}", stdout);
-  println!("{}", stderr);
+  //println!("geoserver stdout={}", stdout);
+  //println!("geoserver stderr={}", stderr);
 
-  // Grab second line from stdout
-  let second_line = stdout.lines().skip(1).next().expect("Could not get second line of stdout from geoserver startup script");
+  // Grab first stdout line containing the word "java" that is >80 characters long.
+  // This heuristic may need to be updated in the future.
+  let mut geoserver_cmd_s = String::new();
+  for line in stdout.lines() {
+    if line.contains("java") && line.len() > 80 {
+      geoserver_cmd_s = line.to_string();
+    }
+  }
+
+  // Double-escape b/c shlex::split removes '\C' chars.
+  // We must keep '\ ' lines however!
+  let re = regex::Regex::new(r"\\(?P<c>[a-zA-Z0-9_])").unwrap();
+  let geoserver_cmd_s = re.replace_all(&geoserver_cmd_s, "\\\\$c");
+
+  println!("geoserver_cmd_s={}", &geoserver_cmd_s[..]);
 
   // Parse stdout as a command + execute that to have a non-forking geoserver process
-  if let Some(split) = shlex::split(&second_line[..]) {
+  if let Some(split) = shlex::split(&geoserver_cmd_s[..]) {
     
     println!("split={:?}", &split);
 
-    let mut geoserver_data_dir = geoserver_home.clone();
-    geoserver_data_dir.push("data_dir"); // Default location in unzipped eapp dir
+    if split.len() < 2 {
+      // Something broke, return a dummy command.
+      return crate::subprograms::dummy_proc();
+    }
 
     return Command::new(&split[0])
         .current_dir(&geoserver_home.to_string_lossy()[..])

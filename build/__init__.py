@@ -5,6 +5,7 @@ import socket, shutil
 import time
 import tempfile
 import traceback
+import random
 
 # python3 -m pip install --user requests
 import requests, zipfile, tarfile, bz2, lzma, io
@@ -164,7 +165,6 @@ def dl_archive2d_to(url, inner_archive_name, dst_path, extension=None):
   dl_archive_to(inner_archive_path, dst_path)
 
 
-
 def cond_dl_archive_to(url, dst_path):
   if not e(dst_path) or len(os.listdir(dst_path)) < 2:
     dl_archive_to(url, dst_path)
@@ -217,6 +217,26 @@ def cond_clone_and_build_repo(url, dst_path, build_commands):
     clone_and_build_repo(url, dst_path, build_commands)
 
 
+def build_plugin(plugin_dir, build_cmds, output_file_or_dir, eapp_target_file_or_dir):
+  def build_all():
+    for c in build_cmds:
+      subprocess.run(list(c), check=True)
+
+  within(plugin_dir, build_all)
+
+  if not os.path.exists(output_file_or_dir):
+    raise Exception('Expected file to exist: {}'.format(output_file_or_dir))
+
+  if os.path.isdir(output_file_or_dir):
+    shutil.copytree(output_file_or_dir, eapp_target_file_or_dir)
+  else:
+    shutil.copy(output_file_or_dir, eapp_target_file_or_dir)
+
+
+def cond_build_plugin(plugin_dir, build_cmds, output_file_or_dir, eapp_target_file_or_dir):
+  if not os.path.exists(eapp_target_file_or_dir):
+    build_plugin(plugin_dir, build_cmds, output_file_or_dir, eapp_target_file_or_dir)
+
 def build_loci_eapp_dir_linux64():
   eapp_dir = os.path.abspath( j('target', 'eapp_dir_linux64') )
   if not e(eapp_dir):
@@ -243,6 +263,15 @@ def build_loci_eapp_dir_linux64():
   # Python 3 is available on nearly every linux distro,
   # and python.org does not have an embedded zip build.
   
+  cond_build_plugin(
+    j('plugins', 'usb_gps_reader'),
+    [
+      ['cargo', 'build', '--release', '--target=x86_64-unknown-linux-gnu']
+    ],
+    j('plugins', 'usb_gps_reader', 'target', 'x86_64-unknown-linux-gnu', 'release', 'usb_gps_reader'),
+    j(eapp_dir, 'usb_gps_reader')
+  )
+
 
   return eapp_dir
 
@@ -275,7 +304,21 @@ def build_loci_eapp_dir_win64():
     j(eapp_dir, 'python')
   )
 
+  cond_build_plugin(
+    j('plugins', 'usb_gps_reader'),
+    [
+      ['cargo', 'build', '--release', '--target=x86_64-pc-windows-gnu']
+    ],
+    j('plugins', 'usb_gps_reader', 'target', 'x86_64-pc-windows-gnu', 'release', 'usb_gps_reader.exe'),
+    j(eapp_dir, 'usb_gps_reader.exe')
+  )
+
+
   return eapp_dir
+
+
+
+
 
 def download_3rdparty_webserver_www_assets():
   www_dir = j('src', 'webserver', 'www', '3rdparty')
@@ -357,6 +400,13 @@ def main(argv=sys.argv):
 
   download_3rdparty_webserver_www_assets();
   start_s = print_elapsed(start_s, 'Downloaded 3rdparty assets in {s}s')
+
+  # Parse pre-commands
+  if 'hard-rebuild' in argv:
+    os.environ['LOCI_HARD_REBUILD'] = hex(random.randint(0, 10000000))
+
+
+  # Parse primary command
 
   if 'run' in argv:
     if windows_host():

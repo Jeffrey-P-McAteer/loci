@@ -25,11 +25,13 @@ def test():
   # We also do not require these, but we may want to test with them for performance reasons later.
   loci_env['LOCI_DISABLED_SUBPROGRAMS'] = 'dump1090,postgis,geoserver'
 
+  print('LOCI_RELEASE_EXE={}'.format(os.environ['LOCI_RELEASE_EXE']))
+
   loci_p = subprocess.Popen([
     os.environ['LOCI_RELEASE_EXE'],
   ],
     env=loci_env,
-    stdout=subprocess.DEVNULL,
+    #stdout=subprocess.DEVNULL,
   )
 
   primary_test_e = None
@@ -51,13 +53,13 @@ def test():
       raise Exception('Could not connect to {} to perform test'.format(ws_url))
 
     if windows_host():
-      db_f = os.path.join(os.environ['AppData'], 'DeVil-Tech', 'Loci', 'db', 'db.db')
+      db_f = os.path.join(os.environ['LocalAppData'], 'DeVil-Tech', 'Loci', 'db', 'db.db')
     else:
       db_f = os.path.expanduser('~/.local/share/Loci/db/db.db')
 
-    retries = 99
+    retries = 180
     while retries > 0 and not os.path.exists(db_f):
-      time.sleep(0.2)
+      time.sleep(0.5)
       retries -= 1
 
     db_c = sqlite3.connect(db_f, isolation_level='IMMEDIATE')
@@ -122,8 +124,8 @@ def test():
     time_end_s = time.time()
     time_per_iter_ms = round( ((time_end_s-time_start_s) / reps) * 1000.0, 1)
     
-    # Our target is 5000 posreps/second
-    target_posrep_n = 5000
+    # Our target is 2000 posreps/second
+    target_posrep_n = 2000
     target_posrep_ms = 1000.0
 
     target_time_per_payload_ms = round( (target_posrep_ms / target_posrep_n) * payload_size, 2)

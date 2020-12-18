@@ -22,7 +22,8 @@ use std::collections::HashMap;
 
 pub mod geoserver;
 pub mod postgis;
-pub mod rtl_sdr_programs;
+pub mod dump1090;
+pub mod usb_gps_reader;
 
 pub fn main(loci_exit_f: Arc<AtomicBool>) {
     let eapp_dir = extract_eapp_data();
@@ -213,32 +214,32 @@ fn extract_eapp_data() -> PathBuf {
 
   let gz = GzDecoder::new(&tar_bytes[..]);
   let mut archive = Archive::new(gz);
-  // if let Err(e) = archive.unpack(&eapp_dir) {
-  //   println!("Error extracting eapp tar: {:?}", e);
-  // }
 
   // Instead of having the library extract everything (which may take 5 mins)
   // we go over all entries and only extract new data (files which do not exist).
   let dst = eapp_dir.as_path();
   for entry in archive.entries().unwrap() {
-    if let Ok(mut entry) = entry {
+    match entry {
+      Ok(mut entry) => {
+        let entry_path = match entry.path() {
+          Ok(p) => p,
+          Err(_) => continue
+        };
+        
+        let existing_f = dst.join(entry_path);
+        if existing_f.exists() {
+          //println!("Skipping existing eapp file {}", &existing_f.to_string_lossy()[..]);
+          continue;
+        }
 
-      let entry_path = match entry.path() {
-        Ok(p) => p,
-        Err(_) => continue
-      };
-      
-      let existing_f = dst.join(entry_path);
-      if existing_f.exists() {
-        //println!("Skipping existing eapp file {}", &existing_f.to_string_lossy()[..]);
-        continue;
+        println!("Extracting eapp file {}", &existing_f.to_string_lossy()[..]);
+        if let Err(_e) = entry.unpack_in(&dst) { 
+          //println!("Error unpacking eapp file: {}", e);
+        }
       }
-
-      println!("Extracting eapp file {}", &existing_f.to_string_lossy()[..]);
-      if let Err(_e) = entry.unpack_in(&dst) {
-        //println!("Error unpacking eapp file: {}", e);
+      Err(e) => {
+        println!("Error unpacking eapp file: {}", e);
       }
-
     }
   }
 
@@ -322,73 +323,41 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
 
   let mut dump1090_p = if eapp_enabled("dump1090") {
-    rtl_sdr_programs::start_dump1090(eapp_dir)
+    dump1090::start(eapp_dir)
   }
   else { dummy_proc() };
-
   let dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
   let mut dump1090_stdout = BufReader::new(dump1090_stdout);
-
   let mut dump1090_record: HashMap<&str, String> = HashMap::new();
+
+
+
+  let mut usb_gps_p = if eapp_enabled("usb_gps") {
+    usb_gps_reader::start(eapp_dir)
+  }
+  else { dummy_proc() };
+  let usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
+  let mut usb_gps_stdout = BufReader::new(usb_gps_stdout);
+
 
   // Iterate all processes, possibly processing stdout and writing information to DB
   loop {
     let mut should_exit = true;
     
-    // dump1090
-    let dump1090_p_alive = if let Ok(None) = dump1090_p.try_wait() { true } else { false };
-    if dump1090_p_alive {
+    if dump1090::poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_record) {
       should_exit = false;
-
-      let mut buf = String::new();
-      match dump1090_stdout.read_line(&mut buf) {
-        Ok(n) => {
-          let read_line = &buf[0..n];
-          let read_line = read_line.trim();
-          if read_line.starts_with("*") {
-            // TODO Save last line as a record
-            println!("dump1090_record={:?}", dump1090_record);
-
-            dump1090_record.clear();
-
-            dump1090_record.insert("encoded-packet", read_line.to_string());
-
-          }
-          else if read_line.starts_with("Time") {
-            dump1090_record.insert("time", (&read_line[6..]).to_string());
-          }
-          else if read_line.starts_with("Baro altitude") {
-            dump1090_record.insert("altitude", (&read_line[15..]).to_string());
-          }
-          else if read_line.starts_with("CPR latitude") {
-            dump1090_record.insert("lat", (&read_line[14..]).to_string());
-          }
-          else if read_line.starts_with("CPR longitude") {
-            dump1090_record.insert("lon", (&read_line[15..]).to_string());
-          }
-          else if read_line.starts_with("CPR type") {
-            dump1090_record.insert("type", (&read_line[9..]).to_string());
-          }
-          else if read_line.starts_with("RSSI") {
-            dump1090_record.insert("rssi", (&read_line[6..]).to_string());
-          }
-          else if read_line.starts_with("DF:") {
-            dump1090_record.insert("id-line", (&read_line[..]).to_string());
-          }
-          else if read_line.len() > 2 {
-            println!("unused dump1090 line = {}", read_line);
-          }
-
-
-        }
-        Err(e) => { print!("e={:?}", e); }
-      }
-
     }
+
+    if usb_gps_reader::poll(&mut usb_gps_p, &mut usb_gps_stdout) {
+      should_exit = false;
+    }
+
 
     if loci_exit_f.load(std::sync::atomic::Ordering::SeqCst) {
       should_exit = true;
     }
+
+    //println!("admin poll should_exit={}", should_exit);
 
     if should_exit {
       
@@ -403,7 +372,7 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
 }
 
-fn dummy_proc() -> std::process::Child {
+pub fn dummy_proc() -> std::process::Child {
   use std::process::{Command, Stdio};
   if cfg!(windows) {
     Command::new("cmd.exe")

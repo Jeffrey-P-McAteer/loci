@@ -1,0 +1,25 @@
+build-linux64:
+  stage: build
+  script:
+    - python -m build release
+  artifacts:
+    paths:
+      - target/release/loci
+    expire_in: 2 weeks
+
+
+build-win64:
+  stage: build
+  script:
+    - python -m build release
+  artifacts:
+    paths:
+      - target/release/loci.exe
+    expire_in: 2 weeks
+
+
+test-all:
+  stage: test
+  script:
+    - python -m test
+

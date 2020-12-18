@@ -11,6 +11,7 @@ use std::process::{Command};
 
 fn main() {
   println!("cargo:rerun-if-env-changed=LOCI_EAPP_TAR");
+  println!("cargo:rerun-if-env-changed=LOCI_HARD_REBUILD");
   embed_eapp_tar(
     &std::env::var("LOCI_EAPP_TAR").unwrap_or(String::new())[..]
   );
@@ -61,6 +62,8 @@ fn embed_eapp_tar(eapp_tar_path: &str) {
     }
   }
 
+  drop(compiling_for_win); // silence compiler warning, we may want to query compiling_for_win itf
+
   if cfg!(feature = "embed-eapp-tar") && eapp_tar_path.len() < 1 {
     panic!("Feature embed-eapp-tar requested but no environment variable set: LOCI_EAPP_TAR");
   }
@@ -104,63 +107,17 @@ extern __attribute__((visibility("default"))) char* get_embed_tar_bytes_end() {{
   }
 
   eapp_tar_data_contents += r#"
-#ifdef _WIN32
-#include <windows.h> 
-#include <lmaccess.h>
-#include <lmerr.h>
-extern __attribute__((visibility("default"))) _Bool loci_win_is_administrator()  {
-      /*
-      _Bool result;
-      DWORD rc;
-      wchar_t user_name[256];
-      USER_INFO_1 *info;
-      DWORD size = sizeof( user_name );
-      GetUserNameW( user_name, &size);
-      rc = NetUserGetInfo( NULL, user_name, 1, (byte **) &info );
-      if ( rc != NERR_Success ) 
-              return FALSE;
-      result = info->usri1_priv == USER_PRIV_ADMIN;
-      NetApiBufferFree( info );
-      return result;
-      */
-      return FALSE;
-}
 
-DWORD rust_win_runas(LPCTSTR *cmd, LPCTSTR *params, int show)
-{
-    /*
-    DWORD code;
-    SHELLEXECUTEINFO sei = { sizeof(sei) };
+// If we ever need C api calls again stick 'em in here and
+// use the
+//    extern __attribute__((visibility("default")))
+// tokens to disable name mangling so we can link to rust code.
 
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-
-    sei.fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS;
-    sei.lpVerb = L"runas";
-    sei.lpFile = cmd;
-    sei.lpParameters = params;
-    sei.nShow = show ? SW_NORMAL : SW_HIDE;
-
-    if (ShellExecuteExW(&sei) == FALSE || sei.hProcess == NULL) {
-        return -1;
-    }
-
-    WaitForSingleObject(sei.hProcess, INFINITE);
-
-    if (GetExitCodeProcess(sei.hProcess, &code) == 0) {
-        return -1;
-    }
-
-    return code;
-    */
-    return -1;
-}
-
-#endif
   "#;
 
   fs::write(&eapp_tar_data_c_f[..], eapp_tar_data_contents).expect("Could not write to eapp_tar_data.c!");
   
-  Command::new(cc)
+  let s = Command::new(cc)
     .args(&[
       "-g", "-fpic", "-O", "-c",
       format!("{}{}eapp_tar_data.c", out_dir, std::path::MAIN_SEPARATOR).as_str(),
@@ -169,7 +126,11 @@ DWORD rust_win_runas(LPCTSTR *cmd, LPCTSTR *params, int show)
     .status()
     .expect("Could not run cc");
 
-  Command::new(ld)
+  if !s.success() {
+    panic!("eapp_tar_data_c.o compile failed!");
+  }
+
+  let s = Command::new(ld)
     .args(&[
       "-r", "-b", "binary", 
       &eapp_tar_path,
@@ -178,7 +139,11 @@ DWORD rust_win_runas(LPCTSTR *cmd, LPCTSTR *params, int show)
     .status()
     .expect("Could not run ld");
 
-  Command::new(ar)
+  if !s.success() {
+    panic!("eapp_tar_data.o link failed!");
+  }
+
+  let s = Command::new(ar)
     .args(&[
       "rcs", format!("{}{}{}", out_dir, std::path::MAIN_SEPARATOR, static_lib_fname).as_str(),
         format!("{}{}eapp_tar_data_c.o", out_dir, std::path::MAIN_SEPARATOR).as_str(),
@@ -187,14 +152,14 @@ DWORD rust_win_runas(LPCTSTR *cmd, LPCTSTR *params, int show)
     .status()
     .expect("Could not run ar");
 
-  if compiling_for_win {
-    // cargo needs to link against netapi32 for the symbol NetUserGetInfo
-    println!("cargo:rustc-link-lib=static=netapi32");
+  if !s.success() {
+    panic!("static_lib_fname compile failed!");
   }
 
   // tell cargo to add the object file to the list of symbols used to build the final binary
   println!("cargo:rustc-link-search=native={}", &out_dir);
   println!("cargo:rustc-link-lib=static=eapp_tar_data");
+
 }
 
 

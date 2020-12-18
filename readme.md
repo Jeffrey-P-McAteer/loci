@@ -58,16 +58,28 @@ sudo ln -s /usr/x86_64-w64-mingw32/include/windows.h /usr/x86_64-w64-mingw32/inc
 # Building
 
 ```bash
-python build.py
+python -m build
 ```
+
+Sometimes plugin binaries are added to a new eapp `.tar.gz` but the static lib
+is not re-compiled. If you suspect this sort of build cache issue is happening
+passing the command 'hard-rebuild' will delete intermediary artifacts known to
+be over-cached. This does not happen by default because generally plugins are
+not commonly changed.
+
+```bash
+python -m build hard-rebuild
+```
+
+
 
 # Running
 
 ```bash
-python build.py run
+python -m build run
 # or
-LOCI_DISABLED_SUBPROGRAMS=dump1090 python build.py run-debug
-LOCI_DISABLED_SUBPROGRAMS=dump1090,postgis,geoserver python build.py run-debug
+LOCI_DISABLED_SUBPROGRAMS=dump1090 python -m build run-debug
+LOCI_DISABLED_SUBPROGRAMS=dump1090,postgis,geoserver python -m build run-debug
 ```
 
 # Testing

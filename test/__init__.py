@@ -28,6 +28,12 @@ def run_tests():
 
   os.environ['LOCI_RELEASE_EXE'] = os.path.abspath(os.environ['LOCI_RELEASE_EXE'])
 
+  # We are unable to test things which require user interaction,
+  # and aquiring admin privs requires user interaction
+  os.environ['LOCI_NO_ADMIN'] = 't'
+  os.environ['LOCI_NO_GUI'] = 't'
+  os.environ['LOCI_DISABLED_SUBPROGRAMS'] = 'dump1090,postgis,geoserver'
+
   print('')
 
   num_failures = 0

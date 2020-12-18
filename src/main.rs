@@ -75,17 +75,26 @@ fn main() {
     setup_signal_handlers(loci_exit_f.clone());
   }
 
-  // If we are root spawn administrative BG threads.
-  if privileged_ops::we_are_privileged() {
-    subprograms::main_privileged(loci_exit_f.clone());
-    std::process::exit(0)
+  // If we assign LOCI_NO_ADMIN and inadventantly call ourselves
+  // as admin the LOCI_NO_ADMIN state takes priority and we do
+  // not run admin functions.
+  if let Ok(_val) = std::env::var("LOCI_NO_ADMIN") {
+    println!("Skipping privileged_ops::elevate_privileges b/c LOCI_NO_ADMIN set");
   }
-  
-  // Call ourselves again, asking the user to grant us privileges
-  let root_loci_exit_f = loci_exit_f.clone();
-  std::thread::spawn(move || {
-    privileged_ops::elevate_privileges(root_loci_exit_f);
-  });
+  else {
+    // If we are root spawn administrative BG threads.
+    if privileged_ops::we_are_privileged() {
+      subprograms::main_privileged(loci_exit_f.clone());
+      std::process::exit(0)
+    }
+    else {
+      // We are not root; Call ourselves again, asking the user to grant us privileges
+      let root_loci_exit_f = loci_exit_f.clone();
+      std::thread::spawn(move || {
+        privileged_ops::elevate_privileges(root_loci_exit_f);
+      });
+    }
+  }
 
   // Run background threads in the background
   let bg_loci_exit_f = loci_exit_f.clone();
@@ -251,4 +260,19 @@ fn setup_signal_handlers(loci_exit_f: Arc<AtomicBool>) {
   }
 
 }
+
+
+// #[macro_export]
+// macro_rules! dprint {
+//     ( $( $x:expr ),* ) => {
+//         {
+//             let mut temp_vec = Vec::new();
+//             $(
+//                 temp_vec.push($x);
+//             )*
+//             temp_vec
+//         }
+//     };
+// }
+
 
