@@ -29,6 +29,7 @@ actix-web = { version = "3.0.0", default-features = false }
 actix-http = "2.0.0"
 actix-codec = "0.3.0"
 actix-rt = "1.1.1"
+actix-cors = "0.5.3"
 
 mime_guess = "2.0"
 
@@ -53,6 +54,7 @@ regex = "1"
 
 nmea0183 = "0.2.3"
 
+chrono = "0.4.19"
 
 
 [target.x86_64-unknown-linux-gnu.dependencies]
@@ -62,7 +64,7 @@ signal-hook = "0.2"
 
 [target.x86_64-pc-windows-gnu.dependencies]
 winapi = {version = "0.3", features = ["wincon", "winuser"]}
-
+winreg = "0.6"
 
 
 [build-dependencies]
@@ -70,4 +72,10 @@ zip = "0.5.8"
 walkdir = "2"
 pathdiff = "0.2"
 cc = "1.0"
+winres = "0.1"
+
+
+[package.metadata.winres]
+OriginalFilename = "loci.exe"
+LegalCopyright = "Copyright © 2021 DeVil-Tech"
 

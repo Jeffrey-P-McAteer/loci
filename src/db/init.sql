@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS pos_reps (
   lon REAL NOT NULL,
   
   -- The identifier has no fixed format; it is whatever the data source says the posrep is about
+  -- Some sources may use a relative identifier because the source does not provide one.
+  -- They are listed below:
+  --   usb_gps: "USB_GPS_SELF"
   id TEXT NOT NULL,
   
   -- if a posrep goes through multiple sources, separate them with commas.

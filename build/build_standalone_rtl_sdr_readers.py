@@ -1,8 +1,8 @@
 
 from build import *
 
-def build_standalone_rtl_sdr_readers(eapp_dir):
-  
+def build(eapp_dir):
+
   dump_1090_built = (
     os.path.exists(os.path.join(eapp_dir, 'dump1090.exe')) or
     os.path.exists(os.path.join(eapp_dir, 'dump1090'))
@@ -31,27 +31,9 @@ def build_standalone_rtl_sdr_readers(eapp_dir):
   libusb_static_lib_f = None
   libusb_header_f = None
 
-  if windows_host():
-    cond_dl_archive_to(
-      #'https://github.com/libusb/libusb/releases/download/v1.0.24/libusb-1.0.24.7z',
-      'https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-libusb-1.0.23-1-any.pkg.tar.xz',
-      libusb_d
-    )
-    #libusb_static_lib_f = os.path.join(libusb_d, 'MinGW64', 'static', 'libusb-1.0.a')
-    #libusb_static_lib_f = os.path.join(libusb_d, 'VS2019', 'MS64', 'static', 'libusb-1.0.lib')
-    libusb_static_lib_f = os.path.join(libusb_d, 'mingw64', 'lib', 'libusb-1.0.a')
 
-    if not os.path.exists(libusb_static_lib_f):
-      raise Exception('Cannot find libusb*.a/.lib at {}'.format(libusb_static_lib_f))
-
-    libusb_header_f = os.path.join(libusb_d, 'mingw64', 'include', 'libusb-1.0', 'libusb.h')
-    if not os.path.exists(libusb_header_f):
-      raise Exception('Cannot find libusb.h at {}'.format(libusb_header_f))
-
-  else:
-    print('WARNING: LibUSB is assumed to exist on linux hosts, skipping download')
-
-  def replace_lines(file, line_begin, line_end, new_content):
+  # Utility fn used everywhere
+  def replace_lines(file, line_begin, line_end, new_content, missing_src_line_ok=False):
     orig_content = ''
     with open(file, 'r') as fd:
       orig_content = fd.read()
@@ -73,6 +55,9 @@ def build_standalone_rtl_sdr_readers(eapp_dir):
           break
 
     if isinstance(line_begin, str):
+      if missing_src_line_ok:
+        return # do nothing, the callee expects this
+
       raise Exception('Cannot find {} in file {}'.format(line_begin, file))
 
     orig_lines = orig_lines[:line_begin] + new_lines + orig_lines[line_end:]
@@ -80,6 +65,35 @@ def build_standalone_rtl_sdr_readers(eapp_dir):
 
     with open(file, 'w') as fd:
       fd.write(new_content)
+
+
+
+
+  # download static copies of libusb for use in rtl-sdr and zadic.c
+
+  if windows_host():
+    cond_dl_archive_to(
+      #'https://github.com/libusb/libusb/releases/download/v1.0.24/libusb-1.0.24.7z',
+      'https://repo.msys2.org/mingw/x86_64/mingw-w64-x86_64-libusb-1.0.23-1-any.pkg.tar.xz',
+      libusb_d
+    )
+    #libusb_static_lib_f = os.path.join(libusb_d, 'MinGW64', 'static', 'libusb-1.0.a')
+    #libusb_static_lib_f = os.path.join(libusb_d, 'VS2019', 'MS64', 'static', 'libusb-1.0.lib')
+    libusb_static_lib_f = os.path.join(libusb_d, 'mingw64', 'lib', 'libusb-1.0.a')
+
+    if not os.path.exists(libusb_static_lib_f):
+      raise Exception('Cannot find libusb*.a/.lib at {}'.format(libusb_static_lib_f))
+
+    libusb_header_f = os.path.join(libusb_d, 'mingw64', 'include', 'libusb-1.0', 'libusb.h')
+    if not os.path.exists(libusb_header_f):
+      raise Exception('Cannot find libusb.h at {}'.format(libusb_header_f))
+
+  else:
+    print('WARNING: LibUSB is assumed to exist on linux hosts, skipping download')
+
+
+
+  # Build static RTL-SDR libs for various radio receivers
 
   def prebuild():
     if libusb_header_f:

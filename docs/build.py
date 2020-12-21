@@ -8,6 +8,11 @@ import webbrowser
 import urllib.request
 import tempfile
 import shutil
+import datetime
+
+# python -m pip install --user requests
+import requests
+
 
 # python -m pip install --user markdown
 from markdown import *
@@ -28,6 +33,19 @@ def download_plantuml_jar():
 
   return file
 
+def get_release_download_url(lower_title_contains):
+  r = requests.get('https://api.github.com/repos/Jeffrey-P-McAteer/loci/releases')
+  
+  # Releases are newest -> oldest
+  for release in r.json():
+    # Get first with "windows" in title
+    if lower_title_contains in release['name'].lower():
+      # Return the first asset URL
+      return release['assets'][0]['browser_download_url']
+
+  return 'javascript:alert("Coming soon!");'
+
+
 def main():
   # Move to ./docs/ directory
   os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -47,6 +65,7 @@ def main():
     with open(markdown_f, 'r') as md_fd:
       with open(html_f, 'w') as html_fd:
         html_fd.write(
+          '<head><link rel="stylesheet" href="pages_style.css"></head>'+
           markdown(
             md_fd.read()
           )
@@ -57,27 +76,63 @@ def main():
     'java', '-jar', plantuml_jar, *plantuml_files, '-o', output_d
   ])
 
-  shutil.copy(
-    'pages-index.html',
-    os.path.join(output_d, 'index.html')
-  )
+  with open('pages-index.html', 'r') as src_fd:
+    contents = src_fd.read()
+    
+    contents = contents.replace(
+      'LAST_UPDATE_TIMESTAMP',
+      datetime.datetime.now().strftime('%Y-%m-%d %H:%M %Z')
+    )
+
+    contents = contents.replace(
+      'WINDOWS_DOWNLOAD_URL',
+      get_release_download_url('windows64')
+    )
+
+    contents = contents.replace(
+      'LINUX_DOWNLOAD_URL',
+      get_release_download_url('linux64')
+    )
+
+    contents = contents.replace(
+      'SERVER_DOWNLOAD_URL',
+      get_release_download_url('linux64')
+    )
+
+    with open(os.path.join(output_d, 'index.html'), 'w') as dst_fd:
+      dst_fd.write(contents)
+
 
   shutil.copy(
-    os.path.join('..', 'assets', 'sportscenter.ttf'),
-    os.path.join(output_d, 'sportscenter.ttf')
+    'pages_style.css',
+    os.path.join(output_d, 'pages_style.css')
   )
 
-  shutil.copy(
-    os.path.join('..', 'assets', 'icon.png'),
-    os.path.join(output_d, 'icon.png')
-  )
+  asset_files = [
+    'sportscenter.ttf',
+    'icon.png',
+    'splash.jpg',
+
+    'linux_icon.png',
+    'macos_icon.png',
+    'windows_icon.png',
+    'server_icon.png',
+    'android_icon.png',
+    'wearos_icon.png',
+
+  ]
+  for af in asset_files:
+    shutil.copy(
+      os.path.join('..', 'assets', af),
+      os.path.join(output_d, af)
+    )
 
   # Done generating content
 
-  if 'open' in sys.argv:
+  if 'open' in sys.argv or 'show' in sys.argv:
     webbrowser.open(output_d)
 
-  if 'publish' in sys.argv:
+  if 'publish' in sys.argv or 'upload' in sys.argv:
     print('Publishing...')
 
     # Assumes the "doc-pages" branch exists
@@ -134,7 +189,7 @@ def main():
     pages_url = 'https://jeffrey-p-mcateer.github.io/loci/'
     print('Published to {}'.format(pages_url))
 
-    if 'open' in sys.argv:
+    if 'open' in sys.argv or 'show' in sys.argv:
       webbrowser.open(pages_url)
 
 

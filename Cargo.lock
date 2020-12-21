@@ -61,6 +61,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-cors"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f3a3d5493dbc9b8769fe88c030d057ef8d2edc5728e5e26267780e8fc5db0be"
+dependencies = [
+ "actix-web",
+ "derive_more",
+ "futures-util",
+ "log",
+ "once_cell",
+ "tinyvec 1.0.1",
+]
+
+[[package]]
 name = "actix-http"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1525,12 +1539,14 @@ version = "0.1.0"
 dependencies = [
  "actix",
  "actix-codec",
+ "actix-cors",
  "actix-http",
  "actix-rt",
  "actix-web",
  "actix-web-actors",
  "app_dirs2",
  "cc",
+ "chrono",
  "crossbeam",
  "flate2",
  "glob",
@@ -1550,6 +1566,8 @@ dependencies = [
  "web-view",
  "which",
  "winapi 0.3.9",
+ "winreg",
+ "winres",
  "zip",
 ]
 
@@ -3155,6 +3173,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2986deb581c4fe11b621998a5e53361efe6b48a151178d0cd9eeffa4dc6acc9"
 dependencies = [
  "winapi 0.3.9",
+]
+
+[[package]]
+name = "winres"
+version = "0.1.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff4fb510bbfe5b8992ff15f77a2e6fe6cf062878f0eda00c0f44963a807ca5dc"
+dependencies = [
+ "toml",
 ]
 
 [[package]]

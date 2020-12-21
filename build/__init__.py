@@ -254,10 +254,10 @@ def build_loci_eapp_dir_linux64():
   )
 
   if not windows_host():
-    from build.build_dump1090 import build_standalone_rtl_sdr_readers
-    build_standalone_rtl_sdr_readers(eapp_dir)
+    import build.build_standalone_rtl_sdr_readers
+    build_standalone_rtl_sdr_readers.build(eapp_dir)
   else:
-    print('WARNING: Cannot cross-compile dump1090 for linux from a windows host.')
+    print('WARNING: Cannot cross-compile RTL-SDR programs for linux from a windows host.')
     time.sleep(1)
 
   # Python 3 is available on nearly every linux distro,
@@ -293,10 +293,10 @@ def build_loci_eapp_dir_win64():
   )
 
   if windows_host():
-    from build.build_dump1090 import build_standalone_rtl_sdr_readers
-    build_standalone_rtl_sdr_readers(eapp_dir)
+    import build.build_standalone_rtl_sdr_readers
+    build_standalone_rtl_sdr_readers.build(eapp_dir)
   else:
-    print('WARNING: Cannot cross-compile dump1090 for windows from a linux host.')
+    print('WARNING: Cannot cross-compile RTL-SDR programs for windows from a linux host.')
     time.sleep(1)
 
   cond_dl_archive_to(

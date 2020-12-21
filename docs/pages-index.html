@@ -4,74 +4,117 @@
     <meta charset="utf-8" />
     <link rel="icon" href="icon.png"  type="image/png"/>
     <title>Loci</title>
-    <style>
-@font-face {
-  font-family: sportscenter;
-  src: url(sportscenter.ttf);
-}
-
-html {
-  background-color: #0d1424;
-  /* TODO replace url w/ generated or committed image asset */
-  background-image: url('http://locorum.download.page.s3-website-us-east-1.amazonaws.com/desktop_splash.jpg');
-  background-repeat: no-repeat;
-  background-size: min(100vw, 900pt) auto;
-  background-position: center top;
-  background-clip: padding-box;
-
-  padding: 0;
-  padding-top: 0px;
-}
-body {
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: min(220pt, 100vw * 0.25);
-  padding: 8pt 24pt;
-  max-width: 740px;
-
-  color: #ffffff;
-  background-color: #3363ad;
-  font-size: 1.2em;
-}
-
-h1, h2, h3, h4 {
-  font-family: sportscenter, sans-serif;
-  text-transform: capitalize;
-}
-p, em, ul, ol, li {
-  font-family: sans-serif;
-}
-a {
-  color: #ffffff;
-}
-a:hover {
-  color: #6393dd;
-}
-a:visited {
-  color: #ffffff;
-}
-h1 > a, h2 > a, h3 > a {
-  text-decoration: none;
-}
-
-    </style>
+    <link rel="stylesheet" href="pages_style.css">
   </head>
   <body>
     <h1><img src="icon.png" style="width:1.5em;height:1.5em;margin-right:2pt;vertical-align: middle;"> Loci</h1>
     <p>
-      A simple flexible high-performance deploy-anywhere geospatial situation tracker
+      A simple flexible high-performance deploy-anywhere geospatial situation tracker.
+      Ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque ante eros, volutpat pellentesque augue vel, gravida congue nulla. Vestibulum nisl nibh, egestas vitae sodales sed, tempor sit amet neque. 
     </p>
     
+    <h2>Screenshots</h2>
+    <div class="screenshots">
+      <a href="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"><img src="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"></a>
+      <a href="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"><img src="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"></a>
+      <a href="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"><img src="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"></a>
+      <a href="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"><img src="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"></a>
+      <a href="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"><img src="https://dvtlocorum.z13.web.core.windows.net/locorum-electron-window.png"></a>
+    </div>
+
     <h2><a href="https://github.com/Jeffrey-P-McAteer/loci/releases">Downloads</a></h2>
-    <p>
-      See the <a href="https://github.com/Jeffrey-P-McAteer/loci/releases">releases</a> page.
-    </p>
+    <div class="screenshots">
+      <em>Last updated LAST_UPDATE_TIMESTAMP </em>
+
+      <br><br>
+
+      <a href="WINDOWS_DOWNLOAD_URL">
+        <div class="download">
+          <p>
+            <img src="windows_icon.png" alt="windows_icon">
+            Windows
+          </p>
+        </div>
+      </a>
+
+      <a href="javascript:alert('Coming soon!');">
+        <div class="download">
+          <p>
+            <img src="macos_icon.png" alt="macos_icon">
+            macOS
+          </p>
+        </div>
+      </a>
+
+      <a href="LINUX_DOWNLOAD_URL">
+        <div class="download">
+          <p>
+            <img src="linux_icon.png" alt="linux_icon">
+            Linux
+          </p>
+        </div>
+      </a>
+
+      <a href="javascript:alert('Coming soon!');">
+        <div class="download">
+          <p>
+            <img src="android_icon.png" alt="android_icon">
+            Android
+          </p>
+        </div>
+      </a>
+
+      <a href="javascript:alert('Coming soon!');">
+        <div class="download">
+          <p>
+            <img src="wearos_icon.png" alt="wearos_icon">
+            Wear OS
+          </p>
+        </div>
+      </a>
+
+      <a href="SERVER_DOWNLOAD_URL">
+        <div class="download">
+          <p>
+            <img src="server_icon.png" alt="server_icon">
+            Server
+          </p>
+        </div>
+      </a>
+
+
+      <br>
+      See the <a href="https://github.com/Jeffrey-P-McAteer/loci/releases">releases</a> page for previous releases.
+
+    </div>
+
+    <h2>Licenses</h2>
+    <div>
+      <p>
+        Loci comes with an unlimited reuse 10-minute trial that contains basic features.
+        <br><br>
+        If you are interested in a license to remove the time limit and enable additional
+        features please contact <a href="mailto:DeVilliers@DeVil-Tech.com">DeVilliers@DeVil-Tech.com</a>
+        or call 540-207-4439.
+      </p>
+    </div>
 
     <h2>Documentation</h2>
     <ul>
-      <li><a href="readme.html">Readme</a></li>
-      <li><a href="process_startup_sequence.png">process_startup_sequence.png</a></li>
+      <li><a href="features.html">Features</a></li>
+      <li><a href="one-liners.html">Development one-liners</a></li>
+      <li><a href="one-liners.html">Development one-liners</a></li>
     </ul>
+
+    <h2>Legal</h2>
+    <pre>
+      /*************************************************************************************
+       * Copyright (C) DeVilliers Technology, LLC - All Rights Reserved
+       * Unauthorized copying of this file, via any medium is strictly prohibited
+       * Proprietary and confidential
+       * Written by Jeffrey McAteer &lt;jeffrey.mcateer@devil-tech.com&gt;, Feb 2019 - Jan 2021
+       *************************************************************************************/
+    </pre>
 
   </body>
 </html>

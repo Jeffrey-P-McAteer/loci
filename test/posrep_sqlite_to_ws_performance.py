@@ -124,8 +124,8 @@ def test():
     time_end_s = time.time()
     time_per_iter_ms = round( ((time_end_s-time_start_s) / reps) * 1000.0, 1)
     
-    # Our target is 2000 posreps/second
-    target_posrep_n = 2000
+    # Our target is 900 posreps/second
+    target_posrep_n = 900
     target_posrep_ms = 1000.0
 
     target_time_per_payload_ms = round( (target_posrep_ms / target_posrep_n) * payload_size, 2)

@@ -96,6 +96,11 @@ fn main() {
     }
   }
 
+  // Print machine HWID to stdout to support customers who want offline activation
+  println!("");
+  println!("HWID={}", license::get_host_hwid());
+  println!("");
+
   // Run background threads in the background
   let bg_loci_exit_f = loci_exit_f.clone();
   std::thread::spawn(move || {
@@ -159,7 +164,7 @@ fn gui_main() -> Result<(), Box<dyn std::error::Error>> {
           .content(web_view::Content::Url(format!("http://127.0.0.1:{}", HTTP_PORT)))
           .size(600, 400)
           .resizable(true)
-          .debug(false)
+          .debug( cfg!(debug_assertions) )
           .user_data(())
           .invoke_handler(|_webview, _arg| Ok(()))
           .build()?;
@@ -241,7 +246,8 @@ fn hide_console_on_windows_win() {
   // Check if we are run from the console or just launched with explorer.exe
   let mut console_proc_list_buff: Vec<u32> = vec![0; 16];
   let num_procs = unsafe { winapi::um::wincon::GetConsoleProcessList(console_proc_list_buff.as_mut_ptr(), 16) };
-  if num_procs == 1 {
+  println!("num_procs={:?}", num_procs);
+  if num_procs == 1 || num_procs == 2 {
     // We were launched from explorer.exe, detatch the console
     unsafe { winapi::um::wincon::FreeConsole() };
   }
