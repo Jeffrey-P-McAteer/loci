@@ -33,12 +33,17 @@ def download_plantuml_jar():
 
   return file
 
-def get_windows_download_url():
-  r = requests.get('https://api.github.com/repos/Jeffrey-P-McAteer/loci/actions/artifacts')
-  print(r.json())
+def get_release_download_url(lower_title_contains):
+  r = requests.get('https://api.github.com/repos/Jeffrey-P-McAteer/loci/releases')
+  
+  # Releases are newest -> oldest
+  for release in r.json():
+    # Get first with "windows" in title
+    if lower_title_contains in release['name'].lower():
+      # Return the first asset URL
+      return release['assets'][0]['browser_download_url']
 
-  return 'javascript:alert(5);'
-
+  return 'javascript:alert("Coming soon!");'
 
 
 def main():
@@ -81,7 +86,17 @@ def main():
 
     contents = contents.replace(
       'WINDOWS_DOWNLOAD_URL',
-      get_windows_download_url()
+      get_release_download_url('windows64')
+    )
+
+    contents = contents.replace(
+      'LINUX_DOWNLOAD_URL',
+      get_release_download_url('linux64')
+    )
+
+    contents = contents.replace(
+      'SERVER_DOWNLOAD_URL',
+      get_release_download_url('linux64')
     )
 
     with open(os.path.join(output_d, 'index.html'), 'w') as dst_fd:
