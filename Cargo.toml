@@ -70,4 +70,10 @@ zip = "0.5.8"
 walkdir = "2"
 pathdiff = "0.2"
 cc = "1.0"
+winres = "0.1"
+
+
+[package.metadata.winres]
+OriginalFilename = "loci.exe"
+LegalCopyright = "Copyright © 2021 DeVil-Tech"
 
