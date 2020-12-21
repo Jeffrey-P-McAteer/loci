@@ -1,7 +1,7 @@
 
 from build import *
 
-def build_standalone_rtl_sdr_readers(eapp_dir):
+def build(eapp_dir):
   
   dump_1090_built = (
     os.path.exists(os.path.join(eapp_dir, 'dump1090.exe')) or

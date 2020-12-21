@@ -14,18 +14,29 @@ This iteration of Locorum differs significantly in design and goals:
 
  - single executable file deployment (no install step, very few dependencies (only things like `kernel.dll` and `libc`))
  - heavy use of polling and async io as a replacement for threads + blocking io
- - ability to deploy anything we can fit in a .zip directory as a sub-process
+ - ability to deploy anything we can fit in a `.tar` directory as a sub-process
 
 # Design
 
  - `loci.exe` is executed
  - determine app data directory (`%AppData%` on windows, `$HOME/.loci/` on linux)
- - T1: idemepotent extraction of embedded .zip directories to app data directory
-  - T1.a as .zip files are extracted, execute sub-processes when done. Store sub-processes in an array and
+ - T1: idemepotent extraction of embedded `.tar` directories to app data directory
+  - T1.a as `.tar` files are extracted, execute sub-processes when done. Store sub-processes in an array and
     watch + restart them if they die.
  - T2: webserver on port ABC (where ABC is configurable w/ env var)
   - webserver serves a relatively static UI with a websocket for server comms
  - T3: HTML webview UI, with OS-specific tuning (eg win10 titlebar color changes and icons)
+
+# Documentation and User Manual
+
+Loci documentation is tracked under the `./docs/` directory.
+
+Documents relevant to new users begin at `./docs/user-manual-<langcode>.md`, where `<langcode>` is a 2-character
+language code.
+
+Documents relevant to 3rd-party developers and users who want to add functionality begin at [`./docs/api-guide.md`](docs/api-guide.md).
+This is also how the Loci team plans to support noncommercial, classified, and proprietary radio extentions without requiring organization to make their algorithms public.
+
 
 # Dependencies
 

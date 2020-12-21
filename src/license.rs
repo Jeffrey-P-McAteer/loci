@@ -66,6 +66,7 @@ pub fn check_license() -> bool {
   return get_licensed_features().len() > 1;
 }
 
+#[allow(dead_code)]
 #[inline(always)]
 pub fn has_licensed_feature(feature: &str) -> bool {
   get_licensed_features().contains(feature)
@@ -77,8 +78,7 @@ pub fn has_licensed_feature(feature: &str) -> bool {
 pub fn get_licensed_features() -> String {
   use pgp::*;
   use std::io::Cursor;
-  use std::io::prelude::*;
-
+  
   let mut features_s = String::new();
 
   let mut lic_txt = String::new();
@@ -109,8 +109,10 @@ pub fn get_licensed_features() -> String {
   let sig_armor = chunks[1];
   let sig_armor = sig_armor.trim();
 
-  println!("msg_txt={}", &msg_txt);
-  println!("sig_armor={}", &sig_armor);
+  //println!("msg_txt={}", &msg_txt);
+  //println!("sig_armor={}", &sig_armor);
+
+  let orig_msg_txt = msg_txt.clone();
 
   // normalize msg_txt by splitting on whitespace and joining without:
   let msg_txt: String = msg_txt.chars().filter(|c| !c.is_whitespace()).collect();
@@ -120,10 +122,10 @@ pub fn get_licensed_features() -> String {
   let mut sig_armor_reader = Cursor::new(sig_armor.as_bytes());
   
   match Message::from_armor_single(&mut sig_armor_reader) {
-    Ok((mut msg, headers)) => {
+    Ok((mut msg, _headers)) => {
 
-      println!("msg={:?}", msg);
-      println!("headers={:?}", headers);
+      //println!("msg={:?}", msg);
+      //println!("headers={:?}", headers);
 
       if let Message::Signed{ref mut message, one_pass_signature: _, signature: _} = msg {
         *message = Some(
@@ -134,16 +136,62 @@ pub fn get_licensed_features() -> String {
       for issuer_key in LICENSE_ISSUERS_KEYS.iter() {
         let mut issuer_key_reader = Cursor::new(issuer_key.as_bytes());
         match SignedPublicKey::from_armor_single(&mut issuer_key_reader) {
-          Ok((pkey, headers)) => {
+          Ok((pkey, _headers)) => {
             
-            println!("pkey={:?}", &pkey);
-            println!("headers={:?}", &headers);
+            //println!("pkey={:?}", &pkey);
+            //println!("headers={:?}", &headers);
 
             match msg.verify(&pkey) {
               Ok(()) => {
-                // License is good, TODO return features / check expire dates and HWID?
+                // License is good,
+                // check expire + hwid
+
+                if let Some(hwid) = parse_val(&orig_msg_txt, "hwid") {
+                  // if hwid is empty that means the license may be used on any machine
+                  // and we rely on a soft online check to prevent duplicate license use.
+                  if hwid.len() > 1 {
+                    if get_host_hwid() != hwid {
+                      // This license is signed but it was issued to a different machine!
+                      return features_s;
+                    }
+                  }
+                }
+
+                if let Some(expire_timestamp) = parse_val(&orig_msg_txt, "expire_timestamp") {
+                  // if current time > expire_timestamp this license is invalid.
+                  // Also notice we don't put a huge amount of effort into normalizing
+                  // across timezones, so some customers may get an extra 24 hours for free.
+                  match chrono::naive::NaiveDateTime::parse_from_str(&expire_timestamp, "%Y-%m-%d %H:%M") {
+                    Ok(expire_dt) => {
+                      let now_time = chrono::Utc::now().naive_local();
+                      let diff = expire_dt - now_time;
+                      // We expect expire_dt to be in the future, so if "diff"
+                      // has a negative value that means the license has expired.
+
+                      if diff.num_days() < 0 {
+                        // There are <0 days remaining on this license!
+                        return features_s;
+                      }
+
+                    }
+                    Err(e) => {
+                      println!("Error parsing expire_timestamp: {}", e);
+                      // A badly formatted timestamp will invalidate the license
+                      return features_s;
+                    }
+                  }
+
+                }
+
+
+                // Parse feature string
 
                 features_s += "base,";
+
+                if let Some(features_list) = parse_val(&orig_msg_txt, "features") {
+                  features_s += &features_list;
+                }        
+
                 
               }
               Err(e) => {
@@ -151,8 +199,9 @@ pub fn get_licensed_features() -> String {
               }
             }
           }
-          Err(e) => {
-            println!("issuer_key e={}", e);
+          Err(_e) => {
+            // Unecessary unless we see public PGP keys not validating licenses
+            //println!("issuer_key e={}", e);
           }
         }
       }
@@ -162,9 +211,95 @@ pub fn get_licensed_features() -> String {
     }
   }
 
-  println!("features_s={}", &features_s);
-
   return features_s;
+}
+
+#[inline(always)]
+fn parse_val(license_txt: &str, key: &str) -> Option<String> {
+  for line in license_txt.lines() {
+    let line = line.trim();
+    if line.starts_with(key) {
+      if let Some(val) = line.split('=').skip(1).next() {
+        return Some(val.to_string());
+      }
+    }
+  }
+  return None;
+}
+
+
+#[inline(always)]
+pub fn get_host_hwid() -> String {
+  get_id()
+}
+
+
+
+/**
+ * The below fns come from https://github.com/tilda/rust-hwid.
+ * The entire library is 40 lines long so we just copy the implementation here
+ * instead of adding it to Cargo.toml; this has the benefit of making new
+ * hardware and OSes easy to support.
+ * 
+ * The original implementation remains (c) tilda under the MIT license.
+ */
+
+
+// rust-hwid
+// (c) 2020 tilda, under MIT license
+
+#[cfg(target_os = "windows")]
+use winreg::enums::HKEY_LOCAL_MACHINE;
+
+#[cfg(target_os = "windows")]
+#[inline(always)]
+fn get_id() -> String {
+    if let Ok(hive) = winreg::RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey("\\\\SOFTWARE\\Microsoft\\Cryptography") {
+      if let Ok(id) = hive.get_value("MachineGuid") {
+        return id;
+      }
+    }
+    
+    let cmd = std::process::Command::new("wmic").args(&[
+      "csproduct", "get", "UUID",
+    ]).output().expect("Failed to get HWID");
+    
+    let stdout = String::from_utf8_lossy(&cmd.stdout);
+    let stdout = stdout.replace("UUID", "");
+    
+    // Just remove whitespace and call it an ID
+    return stdout.chars().filter(|c| !c.is_whitespace()).collect();
+
+}
+
+#[cfg(target_os = "linux")]
+#[inline(always)]
+fn get_id() -> String {
+    use std::path::Path;
+
+    if Path::new("/var/lib/dbus/machine-id").exists() {
+      if let Ok(id) = std::fs::read_to_string("/var/lib/dbus/machine-id") {
+        return id.trim().to_string();
+      }
+    }
+
+    if Path::new("/etc/machine-id").exists() {
+      if let Ok(id) = std::fs::read_to_string("/etc/machine-id") {
+        return id.trim().to_string();
+      }
+    }
+
+    panic!("No HWID file found!")
+}
+
+#[cfg(target_os = "freebsd")]
+#[cfg(target_os = "dragonfly")]
+#[cfg(target_os = "openbsd")]
+#[cfg(target_os = "netbsd")]
+#[cfg(target_os = "darwin")]
+#[inline(always)]
+fn get_id() -> String {
+    unimplemented!("MacOS / *BSD support is not implemented")
 }
 
 

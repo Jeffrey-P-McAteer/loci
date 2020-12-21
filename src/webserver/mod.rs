@@ -182,14 +182,19 @@ pub fn main(_loci_exit_f: Arc<AtomicBool>) {
   
   let address = format!("127.0.0.1:{}", crate::HTTP_PORT);
 
-  HttpServer::new(||
+  HttpServer::new(|| {
+      // See https://docs.rs/actix-cors/0.5.3/actix_cors/struct.Cors.html#method.permissive
+      //let cors = actix_cors::Cors::default();
+      let cors = actix_cors::Cors::permissive();
+
       App::new()
+        .wrap(cors)
         .route("/ws", web::get().to(ws_handler))
         //.route("/", web::get().to(index))
         .default_service(
           web::route().to(index)
         )
-    )
+    })
     .bind(&address)
     .unwrap()
     .run();

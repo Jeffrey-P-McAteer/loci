@@ -15,7 +15,6 @@ use std::{thread, time};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-use std::io::prelude::*;
 use std::io::BufReader;
 
 use std::collections::HashMap;
