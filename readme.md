@@ -4,6 +4,10 @@
 `loci` and `loci.exe` are stand-alone executables
 designed to perform all the functions that `locorum.exe` can perform.
 
+
+Landing page: https://jeffrey-p-mcateer.github.io/loci/
+
+
 This iteration of Locorum differs significantly in design and goals:
 
 # Goals
