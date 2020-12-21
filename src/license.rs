@@ -66,6 +66,7 @@ pub fn check_license() -> bool {
   return get_licensed_features().len() > 1;
 }
 
+#[allow(dead_code)]
 #[inline(always)]
 pub fn has_licensed_feature(feature: &str) -> bool {
   get_licensed_features().contains(feature)
@@ -77,8 +78,7 @@ pub fn has_licensed_feature(feature: &str) -> bool {
 pub fn get_licensed_features() -> String {
   use pgp::*;
   use std::io::Cursor;
-  use std::io::prelude::*;
-
+  
   let mut features_s = String::new();
 
   let mut lic_txt = String::new();

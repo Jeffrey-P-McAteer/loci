@@ -780,7 +780,7 @@ exec "$_RUNJAVA" $JAVA_OPTS $MARLIN_ENABLER -DGEOSERVER_DATA_DIR="$GEOSERVER_DAT
                 .expect("failed to execute startup script");
 
   let stdout = String::from_utf8_lossy(&output.stdout);
-  let stderr = String::from_utf8_lossy(&output.stderr);
+  //let stderr = String::from_utf8_lossy(&output.stderr);
 
   //println!("geoserver stdout={}", stdout);
   //println!("geoserver stderr={}", stderr);

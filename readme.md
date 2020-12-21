@@ -14,14 +14,14 @@ This iteration of Locorum differs significantly in design and goals:
 
  - single executable file deployment (no install step, very few dependencies (only things like `kernel.dll` and `libc`))
  - heavy use of polling and async io as a replacement for threads + blocking io
- - ability to deploy anything we can fit in a .zip directory as a sub-process
+ - ability to deploy anything we can fit in a `.tar` directory as a sub-process
 
 # Design
 
  - `loci.exe` is executed
  - determine app data directory (`%AppData%` on windows, `$HOME/.loci/` on linux)
- - T1: idemepotent extraction of embedded .zip directories to app data directory
-  - T1.a as .zip files are extracted, execute sub-processes when done. Store sub-processes in an array and
+ - T1: idemepotent extraction of embedded `.tar` directories to app data directory
+  - T1.a as `.tar` files are extracted, execute sub-processes when done. Store sub-processes in an array and
     watch + restart them if they die.
  - T2: webserver on port ABC (where ABC is configurable w/ env var)
   - webserver serves a relatively static UI with a websocket for server comms
