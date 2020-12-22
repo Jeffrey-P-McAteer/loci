@@ -145,12 +145,21 @@ def build(eapp_dir):
       automake_bin_d,
     )
     # Make aclocal and automake use perl.exe in $PATH instead of hardcoding it
-    for f in [os.path.join(automake_bin_d, 'bin', 'aclocal'), os.path.join(automake_bin_d, 'bin', 'automake')]:
-      replace_lines(
-        f, '#!/usr/bin/perl', 1,
-        '#!/usr/bin/env perl',
-        missing_src_line_ok=True
-      )
+    replace_lines(
+      os.path.join(automake_bin_d, 'bin', 'aclocal'), '#!/usr/bin/perl', 1,
+      '#!/usr/bin/env perl',
+      missing_src_line_ok=True
+    )
+    replace_lines(
+      os.path.join(automake_bin_d, 'bin', 'aclocal'), '$acdir = ', 1,
+      '$acdir = {automake_bin_d}\\\\share\\\\aclocal'.format(automake_bin_d=automake_bin_d),
+      missing_src_line_ok=True
+    )
+    replace_lines(
+      os.path.join(automake_bin_d, 'bin', 'automake'), '#!/usr/bin/perl', 1,
+      '#!/usr/bin/env perl',
+      missing_src_line_ok=True
+    )
     # Convert them both back to unix lines
     convert_win_lines_to_unix_lines(
       os.path.join(automake_bin_d, 'bin', 'aclocal')
