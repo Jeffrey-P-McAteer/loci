@@ -152,7 +152,7 @@ def build(eapp_dir):
     )
     replace_lines(
       os.path.join(automake_bin_d, 'bin', 'aclocal'), '$acdir = ', 1,
-      "$acdir = '{automake_bin_d}\\\\share\\\\aclocal'".format(automake_bin_d=automake_bin_d),
+      "$acdir = '{automake_bin_d}\\\\share\\\\aclocal';".format(automake_bin_d=automake_bin_d),
       missing_src_line_ok=True
     )
     replace_lines(
