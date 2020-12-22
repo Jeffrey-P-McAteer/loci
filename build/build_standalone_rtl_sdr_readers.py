@@ -180,6 +180,7 @@ def build(eapp_dir):
           '-lc', '''
             cd "{cwd}" ;
             export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:{strawberry_perl_d}\\\\perl\\\\bin:$PATH"  ;
+            export PERL5LIB="{automake_bin_d}\\\\share\\\\automake-1.9:$PERL5LIB" ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
