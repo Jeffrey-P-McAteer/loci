@@ -64,7 +64,10 @@ def build(eapp_dir):
           line_end = line_begin + line_end
           break
 
-    if not missing_src_line_ok and isinstance(line_begin, str):
+    if isinstance(line_begin, str):
+      if missing_src_line_ok:
+        return # do nothing, the callee expects this
+
       raise Exception('Cannot find {} in file {}'.format(line_begin, file))
 
     orig_lines = orig_lines[:line_begin] + new_lines + orig_lines[line_end:]
