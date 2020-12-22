@@ -175,7 +175,7 @@ def build(eapp_dir):
           'C:\\tools\\cygwin\\bin\\bash.exe',
           '-lc', '''
             cd "{cwd}" ;
-            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:{strawberry_perl_d}\\c\\bin:$PATH"  ;
+            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:{strawberry_perl_d}\\\\perl\\\\bin:$PATH"  ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
