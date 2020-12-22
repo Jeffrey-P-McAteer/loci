@@ -187,10 +187,12 @@ def build(eapp_dir):
         [
           'C:\\tools\\cygwin\\bin\\bash.exe',
           '-lc', '''
+            set -e ;
             cd "{cwd}" ;
             export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:{strawberry_perl_d}\\\\perl\\\\bin:$PATH"  ;
             export LIB="{strawberry_perl_d}\\\\c\\\\lib:{automake_bin_d}\\\\share\\\\automake-1.9:$LIB" ;
             export INCLUDE="{strawberry_perl_d}\\\\c\\\\include:{automake_bin_d}\\\\share\\\\automake-1.9:$INCLUDE" ;
+            export perllibdir="{automake_bin_d}\\\\share\\\\automake-1.9:$perllibdir" ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
