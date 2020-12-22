@@ -136,6 +136,14 @@ def build(eapp_dir):
     convert_win_lines_to_unix_lines(
       os.path.join(libtool_bin_d, 'bin', 'libtoolize')
     )
+    replace_lines(
+      os.path.join(libtool_bin_d, 'lib', 'libltdl.la'), 'libdir=', 1,
+      'libdir=/cygdrive/c/"{}"'.format(libtool_bin_d.replace('c:', '').replace('C:', '').replace('\\', '/')),
+    )
+    # libtoolize needs unix line endings b/c unix environment....
+    convert_win_lines_to_unix_lines(
+      os.path.join(libtool_bin_d, 'lib', 'libltdl.la')
+    )
 
     # Same process w/ automake:
     automake_bin_d = os.path.join(build_dir, 'automake')
