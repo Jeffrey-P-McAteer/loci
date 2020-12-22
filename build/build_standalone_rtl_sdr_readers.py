@@ -167,6 +167,15 @@ def build(eapp_dir):
       strawberry_perl_d,
     )
 
+    # We need to add automake perl libs to the strawberry perl directory;
+    # there is no good reason for this other than strawberry perl not
+    # respecting PERL5PATH
+    from distutils.dir_util import copy_tree
+    copy_tree(
+      os.path.join(automake_bin_d, 'share', 'automake-1.9'),
+      os.path.join(strawberry_perl_d, 'perl', 'site', 'lib')
+    )
+
 
 
     cond_clone_and_build_repo(
@@ -180,7 +189,8 @@ def build(eapp_dir):
           '-lc', '''
             cd "{cwd}" ;
             export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:{strawberry_perl_d}\\\\perl\\\\bin:$PATH"  ;
-            export PERL5LIB="{automake_bin_d}\\\\share\\\\automake-1.9:$PERL5LIB" ;
+            export LIB="{strawberry_perl_d}\\\\c\\\\lib:{automake_bin_d}\\\\share\\\\automake-1.9:$LIB" ;
+            export INCLUDE="{strawberry_perl_d}\\\\c\\\\include:{automake_bin_d}\\\\share\\\\automake-1.9:$INCLUDE" ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
