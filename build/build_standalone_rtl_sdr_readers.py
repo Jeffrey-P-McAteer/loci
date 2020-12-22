@@ -141,13 +141,22 @@ def build(eapp_dir):
       'https://phoenixnap.dl.sourceforge.net/project/gnuwin32/automake/1.9.4/automake-1.9.4-bin.zip',
       automake_bin_d,
     )
-
     convert_win_lines_to_unix_lines(
       os.path.join(automake_bin_d, 'bin', 'aclocal')
     )
     convert_win_lines_to_unix_lines(
       os.path.join(automake_bin_d, 'bin', 'automake')
     )
+
+    # Automake depends on perl:
+    strawberry_perl_d = os.path.join(build_dir, 'strawberry_perl')
+    cond_dl_archive_to(
+      # https://strawberryperl.com/releases.html
+      'http://strawberryperl.com/download/5.32.0.1/strawberry-perl-5.32.0.1-64bit-PDL.zip',
+      strawberry_perl_d,
+    )
+
+
 
     cond_clone_and_build_repo(
       'https://github.com/pbatard/libwdi.git',
@@ -159,7 +168,7 @@ def build(eapp_dir):
           'C:\\tools\\cygwin\\bin\\bash.exe',
           '-lc', '''
             cd "{cwd}" ;
-            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:$PATH"  ;
+            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:{strawberry_perl_d}\\c\\bin:$PATH"  ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
@@ -168,6 +177,7 @@ def build(eapp_dir):
             libusb_d=libusb_d,
             libtool_bin_d=libtool_bin_d,
             automake_bin_d=automake_bin_d,
+            strawberry_perl_d=strawberry_perl_d,
           )
         ]
       ]
