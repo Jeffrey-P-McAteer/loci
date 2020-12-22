@@ -104,6 +104,14 @@ def build(eapp_dir):
   # the libusb driver for all devices which look like USB radios.
   if windows_host():
     
+    def convert_win_lines_to_unix_lines(filename):
+      content = None
+      with open(filename, 'rb') as fd:
+        content = fd.read()
+      content = content.replace(b'\r\n', b'\n')
+      with open(filename, 'wb') as fd:
+        fd.write(content)
+
     # libwdi is built within the cygwin environment,
     # and that needs libtool. We d/l libtool and add it to the PATH
     # within the cygwin envrionment.
@@ -122,13 +130,9 @@ def build(eapp_dir):
       'prefix=/cygdrive/c/"{}"'.format(libtool_bin_d.replace('c:', '').replace('C:', '').replace('\\', '/'))
     )
     # libtoolize needs unix line endings b/c unix environment....
-    libtoolize_c = None
-    with open(os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'rb') as fd:
-      libtoolize_c = fd.read()
-    libtoolize_c = libtoolize_c.replace(b'\r\n', b'\n')
-    with open(os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'wb') as fd:
-      fd.write(libtoolize_c)
-
+    convert_win_lines_to_unix_lines(
+      os.path.join(libtool_bin_d, 'bin', 'libtoolize')
+    )
 
     # Same process w/ automake:
     automake_bin_d = os.path.join(build_dir, 'automake')
@@ -138,6 +142,12 @@ def build(eapp_dir):
       automake_bin_d,
     )
 
+    convert_win_lines_to_unix_lines(
+      os.path.join(automake_bin_d, 'bin', 'aclocal')
+    )
+    convert_win_lines_to_unix_lines(
+      os.path.join(automake_bin_d, 'bin', 'automake')
+    )
 
     cond_clone_and_build_repo(
       'https://github.com/pbatard/libwdi.git',
