@@ -17,6 +17,8 @@ use std::sync::atomic::AtomicBool;
 
 use std::io::BufReader;
 
+use std::process::{Command, Child};
+
 use std::collections::HashMap;
 
 pub mod geoserver;
@@ -26,7 +28,16 @@ pub mod usb_gps_reader;
 
 pub fn main(loci_exit_f: Arc<AtomicBool>) {
     let eapp_dir = extract_eapp_data();
+    
     println!("eapp_dir={:?}", &eapp_dir);
+
+    // Create the documented "user-programs" subdirectory if it does not already exist
+    let user_programs_dir = eapp_dir.join("user-programs");
+    if !user_programs_dir.exists() {
+      if let Err(e) = std::fs::create_dir_all(&user_programs_dir) {
+        println!("Error creating user-programs: {}", e);
+      }
+    }
 
     env::set_var(crate::LOCI_EAPP_DIR_ENV_KEY, &eapp_dir.to_string_lossy()[..]);
 
@@ -55,6 +66,27 @@ pub fn main(loci_exit_f: Arc<AtomicBool>) {
 
     // any child apps we want to embed get executed here
 
+
+    // Now process all files in user_programs_dir. We do not recurse.
+    if let Ok(dir_iter) = std::fs::read_dir(&user_programs_dir) {
+      for entry in dir_iter {
+        if let Ok(entry) = entry {
+          let p = entry.path();
+          println!("Executing user program: {}", &p.to_string_lossy()[..] );
+          match spawn_user_program(&p) {
+            Ok(child_p) => {
+              processes.push(child_p);
+            }
+            Err(e) => {
+              println!("Error executing user program: {}", e);
+            }
+          }
+
+        }
+      }
+    }
+
+
     // Write to the DB that child programs have started
     let mut retries = 20;
     loop {
@@ -80,12 +112,6 @@ pub fn main(loci_exit_f: Arc<AtomicBool>) {
       }
     }
 
-    // for p in &mut processes {
-    //   if let Err(e) = p.wait() {
-    //     println!("error waiting on child process: {:?}", e);
-    //   }
-    // }
-
     // Poll loci_exit_f every 200ms and kill children when exit is requested
     loop {
       thread::sleep(time::Duration::from_millis(200));
@@ -107,6 +133,44 @@ pub fn main(loci_exit_f: Arc<AtomicBool>) {
     println!("All subprograms completed!");
 
 }
+
+
+fn spawn_user_program(path: &Path) -> Result<Child, Box<dyn std::error::Error>> {
+  let eapp_dir = app_dirs::app_dir(
+    app_dirs::AppDataType::UserCache, &crate::APP_INFO, "eapp"
+  )?;
+
+  let db_file = crate::db::get_database_file();
+
+
+  if let Some(ext) = path.extension().and_then(std::ffi::OsStr::to_str) {
+    match ext.to_lowercase().as_str() {
+      "py" => {
+        println!("TODO impl python w/ pythonpath");
+      }
+      "pyz" => {
+        println!("TODO impl python zip w/ pythonpath");
+      }
+      "jar" => {
+        println!("TODO impl java w/ classpath");
+      }
+      unk => {
+        println!("Unknown user program extension: {}", unk);
+      }
+    }
+  }
+
+  // Execute path directly, under the assumption the OS
+  // is setup to detect + launch the process.
+  Ok(
+    Command::new(path)
+      .env(crate::LOCI_EAPP_DIR_ENV_KEY, &eapp_dir.to_string_lossy()[..])
+      .env(crate::LOCI_DB_ENV_KEY, &db_file.to_string_lossy()[..])
+      .spawn()?
+  )
+
+}
+
 
 // Run heuristics which may make the system behave more correctly
 pub fn try_to_kill_privledged_programs() {
@@ -371,8 +435,8 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
 }
 
-pub fn dummy_proc() -> std::process::Child {
-  use std::process::{Command, Stdio};
+pub fn dummy_proc() -> Child {
+  use std::process::{Stdio};
   if cfg!(windows) {
     Command::new("cmd.exe")
       .arg("/c")
