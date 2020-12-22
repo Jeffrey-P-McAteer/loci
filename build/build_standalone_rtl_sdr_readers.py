@@ -97,8 +97,8 @@ def build(eapp_dir):
             make -j4
           '''.format(
             cwd=os.path.abspath(libwidi_d).replace('\\', '\\\\'),
-            libusb_d=libusb_d,
-            libtool_bin_d=libtool_bin_d,
+            libusb_d=libusb_d.replace('\\', '\\\\'),
+            libtool_bin_d=libtool_bin_d.replace('\\', '\\\\'),
           )
         ]
       ]
