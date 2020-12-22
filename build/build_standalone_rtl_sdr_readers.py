@@ -43,7 +43,7 @@ def build(eapp_dir):
 
 
   # Utility fn used everywhere
-  def replace_lines(file, line_begin, line_end, new_content):
+  def replace_lines(file, line_begin, line_end, new_content, missing_src_line_ok=False):
     orig_content = ''
     with open(file, 'r') as fd:
       orig_content = fd.read()
@@ -64,7 +64,7 @@ def build(eapp_dir):
           line_end = line_begin + line_end
           break
 
-    if isinstance(line_begin, str):
+    if not missing_src_line_ok and isinstance(line_begin, str):
       raise Exception('Cannot find {} in file {}'.format(line_begin, file))
 
     orig_lines = orig_lines[:line_begin] + new_lines + orig_lines[line_end:]
@@ -127,7 +127,7 @@ def build(eapp_dir):
     # but we need it to be libtool_bin_d.
     replace_lines(
       os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'prefix=', 1,
-      'prefix=/cygdrive/c/"{}"'.format(libtool_bin_d.replace('c:', '').replace('C:', '').replace('\\', '/'))
+      'prefix=/cygdrive/c/"{}"'.format(libtool_bin_d.replace('c:', '').replace('C:', '').replace('\\', '/')),
     )
     # libtoolize needs unix line endings b/c unix environment....
     convert_win_lines_to_unix_lines(
@@ -145,7 +145,8 @@ def build(eapp_dir):
     for f in [os.path.join(automake_bin_d, 'bin', 'aclocal'), os.path.join(automake_bin_d, 'bin', 'automake')]:
       replace_lines(
         f, '#!/usr/bin/perl', 1,
-        '#!/usr/bin/env perl'
+        '#!/usr/bin/env perl',
+        missing_src_line_ok=True
       )
     # Convert them both back to unix lines
     convert_win_lines_to_unix_lines(
