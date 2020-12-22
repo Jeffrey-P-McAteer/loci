@@ -42,6 +42,40 @@ def build(eapp_dir):
   libusb_header_f = None
 
 
+  # Utility fn used everywhere
+  def replace_lines(file, line_begin, line_end, new_content):
+    orig_content = ''
+    with open(file, 'r') as fd:
+      orig_content = fd.read()
+      try:
+        orig_content = orig_content.decode('utf-8')
+      except:
+        pass
+
+    orig_lines = [x for x in orig_content.splitlines()]
+    new_lines = [x for x in new_content.splitlines()]
+
+    # Handle the dynamic lookup case
+    if isinstance(line_begin, str):
+      # lookup line where line_begin exists
+      for i, l in enumerate(orig_lines):
+        if line_begin in l:
+          line_begin = i
+          line_end = line_begin + line_end
+          break
+
+    if isinstance(line_begin, str):
+      raise Exception('Cannot find {} in file {}'.format(line_begin, file))
+
+    orig_lines = orig_lines[:line_begin] + new_lines + orig_lines[line_end:]
+    new_content = '\n'.join(orig_lines)+'\n'
+
+    with open(file, 'w') as fd:
+      fd.write(new_content)
+
+
+
+
   # download static copies of libusb for use in rtl-sdr and zadic.c
 
   if windows_host():
@@ -119,38 +153,7 @@ def build(eapp_dir):
 
 
 
-
   # Build static RTL-SDR libs for various radio receivers
-
-  def replace_lines(file, line_begin, line_end, new_content):
-    orig_content = ''
-    with open(file, 'r') as fd:
-      orig_content = fd.read()
-      try:
-        orig_content = orig_content.decode('utf-8')
-      except:
-        pass
-
-    orig_lines = [x for x in orig_content.splitlines()]
-    new_lines = [x for x in new_content.splitlines()]
-
-    # Handle the dynamic lookup case
-    if isinstance(line_begin, str):
-      # lookup line where line_begin exists
-      for i, l in enumerate(orig_lines):
-        if line_begin in l:
-          line_begin = i
-          line_end = line_begin + line_end
-          break
-
-    if isinstance(line_begin, str):
-      raise Exception('Cannot find {} in file {}'.format(line_begin, file))
-
-    orig_lines = orig_lines[:line_begin] + new_lines + orig_lines[line_end:]
-    new_content = '\n'.join(orig_lines)+'\n'
-
-    with open(file, 'w') as fd:
-      fd.write(new_content)
 
   def prebuild():
     if libusb_header_f:
