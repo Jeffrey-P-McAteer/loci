@@ -33,8 +33,10 @@ def main():
 
   # Increment as long as the produced tag exists
   next_tag_num = None
+  nonce = 1
   while not next_tag_num or next_tag_num in all_tags:
-    next_tag_num = most_recent_tag[:last_nondigit_i] +'.'+ str( int(most_recent_tag[last_nondigit_i+1:]) + 1)
+    next_tag_num = most_recent_tag[:last_nondigit_i] +'.'+ str( int(most_recent_tag[last_nondigit_i+1:]) + nonce)
+    nonce += 1
     
   msg = ' '.join(sys.argv[1:]).strip()
   if not msg:
