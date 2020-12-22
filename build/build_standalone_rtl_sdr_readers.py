@@ -90,13 +90,13 @@ def build(eapp_dir):
         [
           'C:\\tools\\cygwin\\bin\\bash.exe',
           '-lc', '''
-            cd {cwd} ;
+            cd "{cwd}" ;
             export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:$PATH"  ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
           '''.format(
-            cwd=os.path.abspath(libwidi_d),
+            cwd=os.path.abspath(libwidi_d).replace('\\', '\\\\'),
             libusb_d=libusb_d,
             libtool_bin_d=libtool_bin_d,
           )
