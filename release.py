@@ -31,10 +31,11 @@ def main():
   while most_recent_tag[last_nondigit_i].isdigit():
     last_nondigit_i -= 1
 
+  # Increment as long as the produced tag exists
   next_tag_num = None
-  while not next_tag_num or not next_tag_num in all_tags:
+  while not next_tag_num or next_tag_num in all_tags:
     next_tag_num = most_recent_tag[:last_nondigit_i] +'.'+ str( int(most_recent_tag[last_nondigit_i+1:]) + 1)
-
+    
   msg = ' '.join(sys.argv[1:]).strip()
   if not msg:
     msg = 'No version message'
