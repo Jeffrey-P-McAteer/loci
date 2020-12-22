@@ -14,7 +14,7 @@ jobs:
       # See https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md
       - name: Install dependencies
         run: |
-          choco install -y cygwin
+          choco install -y cygwin mingw
           python -m pip install --user websocket_client requests py7zr
           rustup toolchain install stable-x86_64-pc-windows-gnu
           rustup target add x86_64-pc-windows-gnu

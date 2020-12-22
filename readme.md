@@ -56,7 +56,8 @@ You will need `gcc`, `git`, `make`, and `cmake` on your $PATH to build 3rd-party
 like the dumo1090.exe program.
 
 Windows users will need `Cygwin` to build the `dump1090.exe` program as well, because 
-dumo1090 uses `sys/ioctl.h`.
+dumo1090 uses `sys/ioctl.h`. Windows users will need `MinGW` to build the `zadic.exe` program
+which installs USB drivers for devices which look like USB radios.
 
 Linux users will need 'libusb-1.0-0-dev' (or sys equivalent) to build `dump1090`.
 

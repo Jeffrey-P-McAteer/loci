@@ -70,17 +70,35 @@ def build(eapp_dir):
   # the libusb driver for all devices which look like USB radios.
   if windows_host():
     
+    # libwdi is built within the cygwin environment,
+    # and that needs libtool. We d/l libtool and add it to the PATH
+    # within the cygwin envrionment.
+
+    libtool_bin_d = os.path.join(build_dir, 'libtool')
+    cond_dl_archive_to(
+      # http://gnuwin32.sourceforge.net/downlinks/libtool-bin-zip.php
+      'https://iweb.dl.sourceforge.net/project/gnuwin32/libtool/1.5.28/libtool-1.5.26-bin.zip',
+      libtool_bin_d,
+    )
+
     cond_clone_and_build_repo(
       'https://github.com/pbatard/libwdi.git',
       libwidi_d,
       [
-        ['./configure',
-          '--enable-static',
-          '--enable-64bit',
-          '--enable-examples-build',
-          '--with-libusb0={}'.format(libusb_d)
-        ],
-        ['make'],
+        # C:\msys64\usr\bin\bash -lc "export PATH=/mingw%BITS%/bin:$PATH; cd /c/projects/libwdi; ./bootstrap.sh; ./configure --build=%PLATFORM%-w64-mingw32 --host=%PLATFORM%-w64-mingw32 --enable-toggable-debug --enable-examples-build --disable-debug --disable-shared %EXTRA_OPTS% --with-wdkdir=\"C:/Projects/libwdi/wdk\" --with-wdfver=1011 --with-libusb0=\"C:/Projects/libwdi/libusb-win32-bin-1.2.6.0\" --with-libusbk=\"C:/Projects/libwdi/libusbK-3.0.7.0-bin/bin\"; make -j4"
+
+        [
+          'C:\\tools\\cygwin\\bin\\bash.exe',
+          '-lc', '''
+            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:$PATH"  ;
+            ./bootstrap.sh ;
+            ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
+            make -j4
+          '''.format(
+            libusb_d=libusb_d,
+            libtool_bin_d=libtool_bin_d,
+          )
+        ]
       ]
     )
     
