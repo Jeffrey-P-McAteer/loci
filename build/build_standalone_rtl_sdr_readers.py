@@ -119,7 +119,7 @@ def build(eapp_dir):
     # but we need it to be libtool_bin_d.
     replace_lines(
       os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'prefix=', 1,
-      'prefix="{}"'.format(libtool_bin_d)
+      'prefix=/cygdrive/c/"{}"'.format(libtool_bin_d.replace('c:', '').replace('C:', '').replace('\\', '/'))
     )
 
     cond_clone_and_build_repo(
