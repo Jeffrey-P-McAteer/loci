@@ -121,6 +121,13 @@ def build(eapp_dir):
       os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'prefix=', 1,
       'prefix=/cygdrive/c/"{}"'.format(libtool_bin_d.replace('c:', '').replace('C:', '').replace('\\', '/'))
     )
+    # libtoolize needs unix line endings b/c unix environment....
+    libtoolize_c = None
+    with open(os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'rb') as fd:
+      libtoolize_c = fb.read()
+    libtoolize_c = libtoolize_c.replace(b'\r\n', b'\n')
+    with open(os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'wb') as fd:
+      fb.write(libtoolize_c)
 
     cond_clone_and_build_repo(
       'https://github.com/pbatard/libwdi.git',
