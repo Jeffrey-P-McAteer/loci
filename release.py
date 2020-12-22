@@ -32,7 +32,7 @@ def main():
     last_nondigit_i -= 1
 
   next_tag_num = None
-  while not next_tag_num and not next_tag_num in all_tags:
+  while not next_tag_num or not next_tag_num in all_tags:
     next_tag_num = most_recent_tag[:last_nondigit_i] +'.'+ str( int(most_recent_tag[last_nondigit_i+1:]) + 1)
 
   msg = ' '.join(sys.argv[1:]).strip()
