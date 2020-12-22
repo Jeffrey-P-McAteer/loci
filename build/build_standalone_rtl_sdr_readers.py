@@ -129,6 +129,16 @@ def build(eapp_dir):
     with open(os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'wb') as fd:
       fd.write(libtoolize_c)
 
+
+    # Same process w/ automake:
+    automake_bin_d = os.path.join(build_dir, 'automake')
+    cond_dl_archive_to(
+      # http://gnuwin32.sourceforge.net/downlinks/automake-bin-zip.php
+      'https://phoenixnap.dl.sourceforge.net/project/gnuwin32/automake/1.9.4/automake-1.9.4-bin.zip',
+      automake_bin_d,
+    )
+
+
     cond_clone_and_build_repo(
       'https://github.com/pbatard/libwdi.git',
       libwidi_d,
@@ -139,7 +149,7 @@ def build(eapp_dir):
           'C:\\tools\\cygwin\\bin\\bash.exe',
           '-lc', '''
             cd "{cwd}" ;
-            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:$PATH"  ;
+            export PATH="C:\\\\tools\\\\cygwin\\\\bin:{libtool_bin_d}\\\\bin:{automake_bin_d}\\\\bin:$PATH"  ;
             ./bootstrap.sh ;
             ./configure --enable-static --enable-64bit --enable-examples-build --with-libusb0="{libusb_d}" ;
             make -j4
@@ -147,6 +157,7 @@ def build(eapp_dir):
             cwd=os.path.abspath(libwidi_d).replace('\\', '\\\\'),
             libusb_d=libusb_d,
             libtool_bin_d=libtool_bin_d,
+            automake_bin_d=automake_bin_d,
           )
         ]
       ]
