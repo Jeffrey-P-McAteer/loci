@@ -3,6 +3,15 @@ from build import *
 
 def build(eapp_dir):
   
+  # libwidi is responsible for installing USB drivers.
+  # it essentially automates what ZaDig does for windows, and we execute
+  # this binary as admin before launching the other radio programs.
+  #  https://github.com/pbatard/libwdi
+  lib_widi_built = (
+    os.path.exists(os.path.join(eapp_dir, 'zadic.exe')) or
+    not windows_host()
+  )
+
   dump_1090_built = (
     os.path.exists(os.path.join(eapp_dir, 'dump1090.exe')) or
     os.path.exists(os.path.join(eapp_dir, 'dump1090'))
@@ -13,13 +22,14 @@ def build(eapp_dir):
     os.path.exists(os.path.join(eapp_dir, 'rtl_ais'))
   )
 
-  if dump_1090_built and rtl_ais_built:
+  if lib_widi_built and dump_1090_built and rtl_ais_built:
      return
 
   build_dir = os.path.join(os.path.dirname(eapp_dir), os.path.basename(eapp_dir)+'-misc-build')
   if not os.path.exists(build_dir):
     os.makedirs(build_dir)
   
+  libwidi_d = os.path.join(build_dir, 'libwidi')
   rtl_sdr_d = os.path.join(build_dir, 'rtl-sdr')
   dump1090_d = os.path.join(build_dir, 'dump1090')
   rtl_ais_d = os.path.join(build_dir, 'rtl-ais')
@@ -30,6 +40,9 @@ def build(eapp_dir):
   libusb_d = os.path.join(build_dir, 'libusb')
   libusb_static_lib_f = None
   libusb_header_f = None
+
+
+  # download static copies of libusb for use in rtl-sdr and zadic.c
 
   if windows_host():
     cond_dl_archive_to(
@@ -50,6 +63,37 @@ def build(eapp_dir):
 
   else:
     print('WARNING: LibUSB is assumed to exist on linux hosts, skipping download')
+
+
+  # Build zadic for automatic LibUSB assignment
+  # Build libwidi as a static .exe which we can run to install
+  # the libusb driver for all devices which look like USB radios.
+  if windows_host():
+    
+    cond_clone_and_build_repo(
+      'https://github.com/pbatard/libwdi.git',
+      libwidi_d,
+      [
+        ['./configure',
+          '--enable-static',
+          '--enable-64bit',
+          '--enable-examples-build',
+          '--with-libusb0={}'.format(libusb_d)
+        ],
+        ['make'],
+      ]
+    )
+    
+    libwidi_exe = os.path.join(libwidi_d, 'zadic.exe')
+    if not os.path.exists(libwidi_exe):
+      raise Exception('Expected a binary to exist at {}'.format(libwidi_exe))
+    shutil.copy(libwidi_exe, eapp_dir)
+
+
+
+
+
+  # Build static RTL-SDR libs for various radio receivers
 
   def replace_lines(file, line_begin, line_end, new_content):
     orig_content = ''
