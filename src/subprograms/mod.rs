@@ -72,16 +72,17 @@ pub fn main(loci_exit_f: Arc<AtomicBool>) {
       for entry in dir_iter {
         if let Ok(entry) = entry {
           let p = entry.path();
-          println!("Executing user program: {}", &p.to_string_lossy()[..] );
-          match spawn_user_program(&p) {
-            Ok(child_p) => {
-              processes.push(child_p);
-            }
-            Err(e) => {
-              println!("Error executing user program: {}", e);
+          if !p.is_dir() {
+            println!("Executing user program: {}", &p.to_string_lossy()[..] );
+            match spawn_user_program(&p) {
+              Ok(child_p) => {
+                processes.push(child_p);
+              }
+              Err(e) => {
+                println!("Error executing user program: {}", e);
+              }
             }
           }
-
         }
       }
     }

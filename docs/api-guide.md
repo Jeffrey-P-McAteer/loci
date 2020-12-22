@@ -12,5 +12,8 @@ On linux systems the directory is `~/.cache/Loci/eapp/`
 
 Under the eapp directory create a directory named `user-programs`.
 
-Each file 
+
+TODO document how file extensions affect the enviroment variables set (CLASSPATH, PYTHONPATH)
+so that Loci libraries are importable.
+
 
