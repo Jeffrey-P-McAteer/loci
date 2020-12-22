@@ -10,6 +10,10 @@ def main():
     'git','describe','--abbrev=0'
   ]).decode('utf-8').strip()
 
+  all_tags = subprocess.check_output([
+    'git','tag'
+  ]).decode('utf-8').strip()
+
   most_recent_tag_hash = subprocess.check_output([
     'git', 'rev-parse', most_recent_tag+'^{}'
   ]).decode('utf-8').strip()
@@ -27,7 +31,9 @@ def main():
   while most_recent_tag[last_nondigit_i].isdigit():
     last_nondigit_i -= 1
 
-  next_tag_num = most_recent_tag[:last_nondigit_i] +'.'+ str( int(most_recent_tag[last_nondigit_i+1:]) + 1)
+  next_tag_num = None
+  while not next_tag_num and not next_tag_num in all_tags:
+    next_tag_num = most_recent_tag[:last_nondigit_i] +'.'+ str( int(most_recent_tag[last_nondigit_i+1:]) + 1)
 
   msg = ' '.join(sys.argv[1:]).strip()
   if not msg:
