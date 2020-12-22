@@ -141,6 +141,13 @@ def build(eapp_dir):
       'https://phoenixnap.dl.sourceforge.net/project/gnuwin32/automake/1.9.4/automake-1.9.4-bin.zip',
       automake_bin_d,
     )
+    # Make aclocal and automake use perl.exe in $PATH instead of hardcoding it
+    for f in [os.path.join(automake_bin_d, 'bin', 'aclocal'), os.path.join(automake_bin_d, 'bin', 'automake')]:
+      replace_lines(
+        f, '#!/usr/bin/perl', 1,
+        '#!/usr/bin/env perl'
+      )
+    # Convert them both back to unix lines
     convert_win_lines_to_unix_lines(
       os.path.join(automake_bin_d, 'bin', 'aclocal')
     )
