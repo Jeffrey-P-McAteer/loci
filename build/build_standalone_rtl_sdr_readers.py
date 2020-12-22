@@ -81,6 +81,13 @@ def build(eapp_dir):
       libtool_bin_d,
     )
 
+    # libtool_bin_d\bin\libtoolize makes an assumption that libtool is un C:\Program Files,
+    # but we need it to be libtool_bin_d.
+    replace_lines(
+      os.path.join(libtool_bin_d, 'bin', 'libtoolize'), 'prefix=', 1,
+      'prefix="{}"'.format(libtool_bin_d)
+    )
+
     cond_clone_and_build_repo(
       'https://github.com/pbatard/libwdi.git',
       libwidi_d,
