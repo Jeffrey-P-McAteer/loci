@@ -64,13 +64,13 @@ if __name__ == '__main__':
 
     winspec.wait('visible')
 
+    # Debugging
+    winspec.dump_tree()
+
     try:
       winspec = winspec['Zadig']
     except Exception as e:
       traceback.print_exc() # upstream may have re-named window or something
-
-    # Debugging
-    winspec.dump_tree()
 
     # TODO rotate through all items from USB dropdown
     # winspec['ComboBox'].select("")
