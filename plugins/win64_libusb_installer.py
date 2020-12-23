@@ -33,7 +33,7 @@ except Exception as e:
     os.makedirs(libusb_install_py_pkgs)
 
   subprocess.run([
-    sys.executable, '-m', 'pip', '--target={}'.format(libusb_install_py_pkgs), 'pywinauto'
+    sys.executable, '-m', 'pip', 'install', '--target={}'.format(libusb_install_py_pkgs), 'pywinauto'
   ])
 
   from pywinauto.application import Application
