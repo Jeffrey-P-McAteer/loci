@@ -67,7 +67,7 @@ if __name__ == '__main__':
     try:
       winspec = winspec['Zadig']
     except Exception as e:
-      print(e) # upstream may have re-named window or something
+      traceback.print_exc() # upstream may have re-named window or something
 
     # Debugging
     winspec.dump_tree()
