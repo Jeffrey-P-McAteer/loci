@@ -395,7 +395,9 @@ def main(argv=sys.argv):
     # We're clean, do a pull!
     # if this fails that's fine too.
     print('Pulling latest code because this repo is clean...')
-    subprocess.run(['git', 'pull'], check=False)
+    #subprocess.run(['git', 'pull'], check=False)
+    subprocess.run(['git', 'fetch', '--all'], check=False)
+    subprocess.run(['git', 'reset', '--hard', 'origin/main'], check=False)
 
 
   download_3rdparty_webserver_www_assets();
