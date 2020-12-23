@@ -75,10 +75,11 @@ if __name__ == '__main__':
     print(winspec['DriverEdit2'].__class__.__name__)
     print(winspec['DriverEdit2'].dump_tree())
 
+    print(winspec['DriverEdit2']['Edit'])
+    print(winspec['DriverEdit2']['Edit'].__class__.__name__)
+    print(winspec['DriverEdit2']['Edit'].dump_tree())
 
-    print(winspec['DriverEdit2'].child_window(class_name='Edit'))
-    print(winspec['DriverEdit2'].child_window(class_name='Edit').__class__.__name__)
-    
+
     # Run through values of DriverEdit2 until it contains 'libusb-win32'
     max_tries = 50
     while not ( 'libusb-win32' in winspec['DriverEdit2']['Edit'].get_value() ) and max_tries > 0:
