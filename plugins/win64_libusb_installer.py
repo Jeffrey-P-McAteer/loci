@@ -36,6 +36,12 @@ except Exception as e:
     sys.executable, '-m', 'pip', 'install', '--target', libusb_install_py_pkgs, 'pywinauto', 'pywin32', 'pypiwin32'
   ])
 
+  # See https://github.com/mhammond/pywin32 for why this command is necessary
+  # must be run as root, which this script already as a dependency on.
+  subprocess.run([
+    sys.executable, os.path.join(libusb_install_py_pkgs, 'bin', 'pywin32_postinstall.py')
+  ])
+
   from pywinauto.application import Application
 
 
