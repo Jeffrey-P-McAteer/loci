@@ -62,14 +62,16 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
             // detect the (windows-only) case where a USB device needs a driver install and execute the
             // win64_libusb_installer.py script
             #[cfg(target_os = "windows")]
-            if read_line.contains("error querying device") {
-              if let Ok(eapp_dir) = std::env::var(crate::LOCI_EAPP_DIR_ENV_KEY) {
-                let python_script = format!("{}\\win64_libusb_installer.py", eapp_dir.trim());
-                print!("executing {}", &python_script[..]);
-                Command::new("python")
-                  .args(&[&python_script[..]])
-                  .status()
-                  .expect("Could not run win64_libusb_installer.py");
+            {
+              if read_line.contains("error querying device") {
+                if let Ok(eapp_dir) = std::env::var(crate::LOCI_EAPP_DIR_ENV_KEY) {
+                  let python_script = format!("{}\\win64_libusb_installer.py", eapp_dir.trim());
+                  print!("executing {}", &python_script[..]);
+                  Command::new("python")
+                    .args(&[&python_script[..]])
+                    .status()
+                    .expect("Could not run win64_libusb_installer.py");
+                }
               }
             }
 
@@ -112,7 +114,7 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
               println!("unused dump1090 line = {}", read_line);
             }
 
-            
+
           }
           { // mutate vec to remove read bytes
             stdout_buff.drain(0..line_term_i+1);
