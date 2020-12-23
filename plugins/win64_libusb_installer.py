@@ -64,8 +64,10 @@ if __name__ == '__main__':
 
     winspec.wait('visible')
 
-    if 'Zadig' in winspec:
+    try:
       winspec = winspec['Zadig']
+    except Exception as e:
+      print(e) # upstream may have re-named window or something
 
     # Debugging
     winspec.dump_tree()
