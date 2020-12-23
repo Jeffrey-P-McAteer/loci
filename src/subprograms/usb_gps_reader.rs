@@ -42,7 +42,7 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut ChildStdout, stdout_buff
 
   let mut parser = Parser::new();
 
-  let mut buff: [u8; 128] = [0u8; 128];
+  let mut buff: [u8; 4098] = [0u8; 4098];
 
   match usb_gps_stdout.read(&mut buff) {
     Ok(n) => {
@@ -83,7 +83,7 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut ChildStdout, stdout_buff
               }
             }
 
-            
+
           }
           { // mutate (trim) vec
             stdout_buff.drain(0..line_term_i+1);

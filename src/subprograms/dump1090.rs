@@ -40,7 +40,7 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
     return false;
   }
 
-  let mut buff: [u8; 128] = [0u8; 128];
+  let mut buff: [u8; 4098] = [0u8; 4098];
 
   match dump1090_stdout.read(&mut buff) {
     Ok(n) => {
