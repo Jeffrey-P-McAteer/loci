@@ -15,8 +15,6 @@ use std::{thread, time};
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-use std::io::BufReader;
-
 use std::process::{Command, Child};
 
 use std::collections::HashMap;
@@ -390,8 +388,8 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     dump1090::start(eapp_dir)
   }
   else { dummy_proc() };
-  let dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
-  let mut dump1090_stdout = BufReader::new(dump1090_stdout);
+  let mut dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
+  let mut dump1090_stdout_buff = vec![];
   let mut dump1090_record: HashMap<&str, String> = HashMap::new();
   let mut dump1090_restart_flag = false;
 
@@ -400,8 +398,8 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     usb_gps_reader::start(eapp_dir)
   }
   else { dummy_proc() };
-  let usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
-  let mut usb_gps_stdout = BufReader::new(usb_gps_stdout);
+  let mut usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
+  let mut usb_gps_stdout_buff = vec![];
   let mut usb_gps_restart_flag = false;
 
 
@@ -409,7 +407,7 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
   loop {
     let mut should_exit = true;
     
-    if dump1090::poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_record, &mut dump1090_restart_flag) {
+    if dump1090::poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_stdout_buff, &mut dump1090_record, &mut dump1090_restart_flag) {
       should_exit = false;
     }
     if dump1090_restart_flag {
@@ -421,13 +419,12 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
         dump1090::start(eapp_dir)
       }
       else { dummy_proc() };
-      let _dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
-      dump1090_stdout = BufReader::new(_dump1090_stdout);
+      dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
       dump1090_record = HashMap::new();
       dump1090_restart_flag = false;
     }
 
-    if usb_gps_reader::poll(&mut usb_gps_p, &mut usb_gps_stdout, &mut usb_gps_restart_flag) {
+    if usb_gps_reader::poll(&mut usb_gps_p, &mut usb_gps_stdout, &mut usb_gps_stdout_buff, &mut usb_gps_restart_flag) {
       should_exit = false;
     }
     if usb_gps_restart_flag {
@@ -439,8 +436,7 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
         usb_gps_reader::start(eapp_dir)
       }
       else { dummy_proc() };
-      let _usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
-      usb_gps_stdout = BufReader::new(_usb_gps_stdout);
+      usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
       usb_gps_restart_flag = false;
     }
 

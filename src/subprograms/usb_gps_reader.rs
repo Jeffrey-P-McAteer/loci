@@ -7,7 +7,6 @@
 
 use std::path::{Path};
 use std::process::{Command, Child, Stdio, ChildStdout};
-use std::io::BufReader;
 
 
 pub fn start(eapp_dir: &Path) -> Child {
@@ -32,45 +31,54 @@ pub fn start(eapp_dir: &Path) -> Child {
 // responsible for checking process stdout and writing to DB.
 // The returned value should be "true" if the process is alive,
 // or "false" if the process is dead.
-pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>, usb_gps_restart_flag: &mut bool) -> bool {
+pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut ChildStdout, stdout_buff: &mut Vec<u8>, _usb_gps_restart_flag: &mut bool) -> bool {
   use std::io::prelude::*;
   use nmea0183::{Parser, ParseResult};
   
   let usb_gps_p_alive = if let Ok(None) = usb_gps_p.try_wait() { true } else { false };
-  if !  usb_gps_p_alive {
+  if ! usb_gps_p_alive {
     return false;
   }
 
-  let mut buf = String::new();
   let mut parser = Parser::new();
 
-  match usb_gps_stdout.read_line(&mut buf) {
+  let mut buff: [u8; 128] = [0u8; 128];
+
+  match usb_gps_stdout.read(&mut buff) {
     Ok(n) => {
-      if n == 0 { // If this function returns Ok(0), the stream has reached EOF.
-        *usb_gps_restart_flag = true;
-      }
+      // append buff[0..n] to stdout_buff,
+      // then read any lines if they exist in stdout_buff.
+      stdout_buff.extend_from_slice(&buff[0..n]);
 
-      let read_line = &buf[0..n];
-      // NMEA packets must end in RN to be parsed
-      let read_line = format!("{}\r\n", read_line.trim());
+      while let Some(line_term_i) = stdout_buff.iter().position(|&r| r == '\n' as u8) {
+        let read_line_bytes = &buff[0..line_term_i];
+        let read_line = String::from_utf8_lossy(read_line_bytes);
+        let read_line = read_line.trim();
+        // read 0 -> '\n' as string, then trim stdout_buff.
+        stdout_buff.drain(0..line_term_i+1);
 
-      println!("read_line={}", &read_line[..]);
+        // NMEA packets must end in RN to be parsed
+        let read_line = format!("{}\r\n", read_line.trim());
 
-      // TODO detect + use _usb_gps_restart_flag when GPS is detected to be broken
-      
-      for result in parser.parse_from_bytes(read_line.as_bytes()) {
-        match result {
-          Ok(ParseResult::RMC(Some(rmc))) => {
-            println!("Got RMC packet: {:?}", rmc);
-          },
-          
-          Ok(_p) => {
-            //println!("Got other packet: {:?}", p);
-          }
-          Err(e) => {
-            println!("nmea parse e={}", e);
+        println!("read_line={}", &read_line[..]);
+
+        // TODO detect + use _usb_gps_restart_flag when GPS is detected to be broken
+        
+        for result in parser.parse_from_bytes(read_line.as_bytes()) {
+          match result {
+            Ok(ParseResult::RMC(Some(rmc))) => {
+              println!("Got RMC packet: {:?}", rmc);
+            },
+            
+            Ok(_p) => {
+              //println!("Got other packet: {:?}", p);
+            }
+            Err(e) => {
+              println!("nmea parse e={}", e);
+            }
           }
         }
+
       }
 
 

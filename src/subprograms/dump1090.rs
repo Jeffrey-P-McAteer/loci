@@ -7,7 +7,6 @@
 
 use std::path::{Path};
 use std::process::{Command, Child, Stdio, ChildStdout};
-use std::io::BufReader;
 use std::collections::HashMap;
 
 
@@ -33,23 +32,28 @@ pub fn start(eapp_dir: &Path) -> Child {
 // responsible for checking process stdout and writing to DB.
 // The returned value should be "true" if the process is alive,
 // or "false" if the process is dead.
-pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut BufReader<ChildStdout>, dump1090_record: &mut HashMap<&str, String>, dump1090_restart_flag: &mut bool) -> bool {
+pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_buff: &mut Vec<u8>, dump1090_record: &mut HashMap<&str, String>, dump1090_restart_flag: &mut bool) -> bool {
   use std::io::prelude::*;
   
   let dump1090_p_alive = if let Ok(None) = dump1090_p.try_wait() { true } else { false };
-  if !  dump1090_p_alive {
+  if ! dump1090_p_alive {
     return false;
   }
 
-  let mut buf = String::new();
-    match dump1090_stdout.read_line(&mut buf) {
-      Ok(n) => {
-        if n == 0 { // If this function returns Ok(0), the stream has reached EOF.
-          *dump1090_restart_flag = true;
-        }
-        
-        let read_line = &buf[0..n];
+  let mut buff: [u8; 128] = [0u8; 128];
+
+  match dump1090_stdout.read(&mut buff) {
+    Ok(n) => {
+      // append buff[0..n] to stdout_buff,
+      // then read any lines if they exist in stdout_buff.
+      stdout_buff.extend_from_slice(&buff[0..n]);
+
+      while let Some(line_term_i) = stdout_buff.iter().position(|&r| r == '\n' as u8) {
+        let read_line_bytes = &buff[0..line_term_i];
+        let read_line = String::from_utf8_lossy(read_line_bytes);
         let read_line = read_line.trim();
+        // read 0 -> '\n' as string, then trim stdout_buff.
+        stdout_buff.drain(0..line_term_i+1);
 
         // detect the (windows-only) case where a USB device needs a driver install and execute the
         // win64_libusb_installer.py script
@@ -103,11 +107,12 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut BufReader<ChildStdout>
         else if read_line.len() > 2 {
           println!("unused dump1090 line = {}", read_line);
         }
-
-
       }
-      Err(e) => { print!("e={:?}", e); }
+
+
     }
+    Err(e) => { print!("e={:?}", e); }
+  }
 
 
   return true;
