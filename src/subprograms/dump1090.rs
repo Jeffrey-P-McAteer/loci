@@ -47,7 +47,7 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
       if n == 0 { // EOF
         *dump1090_restart_flag = true;
       }
-      
+
       // append buff[0..n] to stdout_buff,
       // then read any lines if they exist in stdout_buff.
       stdout_buff.extend_from_slice(&buff[0..n]);
@@ -112,6 +112,10 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
           println!("unused dump1090 line = {}", read_line);
         }
       }
+
+      // remove '\r' and '\n' chars in the buffer for safer parsing next poll()
+      stdout_buff.retain(|&x| x != '\r' as u8);
+      stdout_buff.retain(|&x| x != '\n' as u8);
 
 
     }

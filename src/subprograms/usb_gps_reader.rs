@@ -85,6 +85,9 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut ChildStdout, stdout_buff
 
       }
 
+      // remove '\r' and '\n' chars in the buffer for safer parsing next poll()
+      stdout_buff.retain(|&x| x != '\r' as u8);
+      stdout_buff.retain(|&x| x != '\n' as u8);
 
     }
     Err(e) => { print!("e={:?}", e); }
