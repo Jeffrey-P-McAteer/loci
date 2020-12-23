@@ -32,7 +32,7 @@ pub fn start(eapp_dir: &Path) -> Child {
 // responsible for checking process stdout and writing to DB.
 // The returned value should be "true" if the process is alive,
 // or "false" if the process is dead.
-pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>) -> bool {
+pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>, _usb_gps_restart_flag: &mut bool) -> bool {
   use std::io::prelude::*;
   use nmea0183::{Parser, ParseResult};
   
@@ -51,6 +51,8 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>) 
       let read_line = format!("{}\r\n", read_line.trim());
 
       println!("read_line={}", &read_line[..]);
+
+      // TODO detect + use _usb_gps_restart_flag when GPS is detected to be broken
       
       for result in parser.parse_from_bytes(read_line.as_bytes()) {
         match result {

@@ -33,7 +33,7 @@ pub fn start(eapp_dir: &Path) -> Child {
 // responsible for checking process stdout and writing to DB.
 // The returned value should be "true" if the process is alive,
 // or "false" if the process is dead.
-pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut BufReader<ChildStdout>, dump1090_record: &mut HashMap<&str, String>) -> bool {
+pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut BufReader<ChildStdout>, dump1090_record: &mut HashMap<&str, String>, dump1090_restart_flag: &mut bool) -> bool {
   use std::io::prelude::*;
   
   let dump1090_p_alive = if let Ok(None) = dump1090_p.try_wait() { true } else { false };
@@ -59,6 +59,10 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut BufReader<ChildStdout>
               .status()
               .expect("Could not run win64_libusb_installer.py");
           }
+        }
+
+        if read_line.contains("no supported devices") || read_line.contains("error querying device") {
+          *dump1090_restart_flag = true;
         }
 
 
