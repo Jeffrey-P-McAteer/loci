@@ -44,6 +44,10 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut BufReader<ChildStdout>
   let mut buf = String::new();
     match dump1090_stdout.read_line(&mut buf) {
       Ok(n) => {
+        if n == 0 { // If this function returns Ok(0), the stream has reached EOF.
+          *dump1090_restart_flag = true;
+        }
+        
         let read_line = &buf[0..n];
         let read_line = read_line.trim();
 

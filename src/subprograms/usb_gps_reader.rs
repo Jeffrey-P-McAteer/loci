@@ -32,7 +32,7 @@ pub fn start(eapp_dir: &Path) -> Child {
 // responsible for checking process stdout and writing to DB.
 // The returned value should be "true" if the process is alive,
 // or "false" if the process is dead.
-pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>, _usb_gps_restart_flag: &mut bool) -> bool {
+pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>, usb_gps_restart_flag: &mut bool) -> bool {
   use std::io::prelude::*;
   use nmea0183::{Parser, ParseResult};
   
@@ -46,6 +46,10 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut BufReader<ChildStdout>, 
 
   match usb_gps_stdout.read_line(&mut buf) {
     Ok(n) => {
+      if n == 0 { // If this function returns Ok(0), the stream has reached EOF.
+        *usb_gps_restart_flag = true;
+      }
+
       let read_line = &buf[0..n];
       // NMEA packets must end in RN to be parsed
       let read_line = format!("{}\r\n", read_line.trim());
