@@ -12,6 +12,7 @@ use app_dirs;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc};
 use std::{thread, time};
+use std::env;
 
 // Responsible for extracting and executing
 // seperate OS processes which Loci expects to be available.
@@ -66,6 +67,7 @@ fn main() {
       thread::sleep(time::Duration::from_millis(10 * 60 * 1000));
       loci_exit_f_l.store(true, Ordering::SeqCst);
       thread::sleep(time::Duration::from_millis(1600));
+      on_proc_exit();
       std::process::exit(0);
     });
   }
@@ -74,6 +76,10 @@ fn main() {
   {
     setup_signal_handlers(loci_exit_f.clone());
   }
+
+  // Rather than hard-coding stuff in subprograms, we add the ./bin/ directories
+  // of sub-programs to the PATH so we can run "java.exe" and invoke our bundled copy.
+  add_eapp_bin_dirs_to_path();
 
   // If we assign LOCI_NO_ADMIN and inadventantly call ourselves
   // as admin the LOCI_NO_ADMIN state takes priority and we do
@@ -101,6 +107,15 @@ fn main() {
   println!("HWID={}", license::get_host_hwid());
   println!("");
 
+  // Init db schema and begin a thread to trim the db forever
+  let db_loci_exit_f = loci_exit_f.clone();
+  std::thread::spawn(move || {
+    { // init sql schema
+      let _c = db::get_init_db_conn();
+    }
+    db::trim_db_t(db_loci_exit_f);
+  });
+
   // Run background threads in the background
   let bg_loci_exit_f = loci_exit_f.clone();
   std::thread::spawn(move || {
@@ -114,11 +129,63 @@ fn main() {
 
   // When gui exits tell children to exit
   loci_exit_f.store(true, Ordering::SeqCst);
+  on_proc_exit();
 
   println!("giving sub-programs 1600ms to exit...");
   thread::sleep(time::Duration::from_millis(1600));
   for _ in 0..9 { println!(""); } // whitespace makes reading logs cleaner
   std::process::exit(0);
+
+}
+
+
+fn on_proc_exit() {
+  // Write to the DB that Loci should exit (all other apps may query this w/ timestamp)
+  let r = crate::db::execute(
+    20, 100, // up to 2 seconds of retries
+    "INSERT INTO app_events (name) VALUES (?1)",
+    rusqlite::params!["loci-shutting-down"]
+  );
+  if let Err(e) = r {
+    println!("error writing loci-shutting-down: {}", e);
+  }
+}
+
+
+fn add_eapp_bin_dirs_to_path() {
+  let eapp_dir = app_dirs::app_dir(
+    app_dirs::AppDataType::UserCache, &crate::APP_INFO, "eapp"
+  ).expect("Could not create eapp directory");
+
+  // Here we store copies of all out sub-program bin/ directories
+  let mut paths = vec![];
+
+  paths.push( eapp_dir.join("python") );          // python.exe lives here
+  paths.push( eapp_dir.join("jre").join("bin") ); // java.exe lives here
+  paths.push( eapp_dir.join("postgres").join("bin") ); // postgres.exe and also winpthread.dll is here
+
+
+  // Now we prepend that to the existing PATH
+
+  let os_path;
+  if let Some(env_os_path) = env::var_os("PATH") {
+    os_path = env_os_path;
+  }
+  else {
+    os_path = std::ffi::OsString::new();
+  }
+
+  let mut os_paths = env::split_paths(&os_path).collect::<Vec<_>>();
+  paths.append(&mut os_paths); // os_paths now empty
+
+  match std::env::join_paths(paths) {
+    Ok(new_os_paths) => {
+      env::set_var("PATH", new_os_paths);
+    }
+    Err(e) => {
+      println!("Could not join paths for new PATH: {}", e);
+    }
+  }
 
 }
 
@@ -136,6 +203,7 @@ fn bg_main(loci_exit_f: Arc<AtomicBool>) {
   });
   if let Err(e) = r {
     println!("Error joining bg threads: {:?}", e);
+    on_proc_exit();
     std::process::exit(1);
   }
 }
@@ -230,7 +298,6 @@ fn gui_main() -> Result<(), Box<dyn std::error::Error>> {
 fn hide_console_on_windows() {
   #[cfg(target_os = "windows")]
   {
-    use std::env;
     if let Ok(val) = env::var("NO_CONSOLE_DETATCH") {
       if val.contains("y") || val.contains("Y") || val.contains("1") {
         return;

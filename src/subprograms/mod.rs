@@ -12,14 +12,10 @@ use std::path::{Path, PathBuf};
 
 use std::env;
 use std::{thread, time};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::AtomicBool;
 
-use std::io::BufReader;
-
 use std::process::{Command, Child};
-
-use std::collections::HashMap;
 
 pub mod geoserver;
 pub mod postgis;
@@ -89,30 +85,15 @@ pub fn main(loci_exit_f: Arc<AtomicBool>) {
 
 
     // Write to the DB that child programs have started
-    let mut retries = 20;
-    loop {
-      if let Ok(con) = crate::db::get_init_db_conn() {
-        match con.execute(
-          "INSERT INTO app_events (name) VALUES (?1)",
-          rusqlite::params!["all-subprograms-spawned"]
-        ) {
-          Ok(_rows) => break,
-          Err(e) => {
-            println!("db e={}", e);
-            thread::sleep(time::Duration::from_millis(200));
-            retries -= 1;
-          }
-        }
-      }
-      else {
-        thread::sleep(time::Duration::from_millis(200));
-        retries -= 1;
-      }
-      if retries < 1 {
-        break;
-      }
+    let r = crate::db::execute(
+      20, 100, // up to 2 seconds of retries
+      "INSERT INTO app_events (name) VALUES (?1)",
+      rusqlite::params!["all-subprograms-spawned"]
+    );
+    if let Err(e) = r {
+      println!("error writing all-subprograms-spawned: {}", e);
     }
-
+    
     // Poll loci_exit_f every 200ms and kill children when exit is requested
     loop {
       thread::sleep(time::Duration::from_millis(200));
@@ -348,6 +329,9 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     }
   }
 
+  // Used by some admin sub-processes
+  env::set_var(crate::LOCI_EAPP_DIR_ENV_KEY, &eapp_dir[..]);
+
   let eapp_dir = Path::new(&eapp_dir[..]);
 
 
@@ -373,6 +357,8 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     }
   }
 
+  // Also used by some admin sub-processes
+  env::set_var(crate::LOCI_DB_ENV_KEY, &db_file[..]);
   let db_file = Path::new(&db_file[..]);
 
   // Wait until parent creates this file
@@ -385,53 +371,117 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
   println!("Executing privledged processes...");
 
-
-  let mut dump1090_p = if eapp_enabled("dump1090") {
-    dump1090::start(eapp_dir)
-  }
-  else { dummy_proc() };
-  let dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
-  let mut dump1090_stdout = BufReader::new(dump1090_stdout);
-  let mut dump1090_record: HashMap<&str, String> = HashMap::new();
-
-
-
-  let mut usb_gps_p = if eapp_enabled("usb_gps") {
-    usb_gps_reader::start(eapp_dir)
-  }
-  else { dummy_proc() };
-  let usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
-  let mut usb_gps_stdout = BufReader::new(usb_gps_stdout);
-
-
-  // Iterate all processes, possibly processing stdout and writing information to DB
-  loop {
-    let mut should_exit = true;
+  // We used to have a single polling loop,
+  // but the fundamental blocking nature of windows read() syscalls
+  // makes this a bad strategy. Instead we run a thread for each
+  // process and re-start them on exit.
+  // We also pass loci_exit_f in so when this process exits we can cleanly
+  // signal to the children to exit.
+  let r = crossbeam::scope(move|s| {
     
-    if dump1090::poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_record) {
-      should_exit = false;
-    }
+    let child_pids: Arc<RwLock<Vec<u32>>> = Arc::new(RwLock::new(vec![]));
 
-    if usb_gps_reader::poll(&mut usb_gps_p, &mut usb_gps_stdout) {
-      should_exit = false;
-    }
-
-
-    if loci_exit_f.load(std::sync::atomic::Ordering::SeqCst) {
-      should_exit = true;
-    }
-
-    //println!("admin poll should_exit={}", should_exit);
-
-    if should_exit {
-      
-      if let Err(e) = dump1090_p.kill() {
-        println!("Error killng: {}", e);
+    let dump1090_loci_exit_f = loci_exit_f.clone();
+    let dump1090_child_pids = child_pids.clone();
+    s.spawn(move |_| {
+      loop {
+        dump1090::start_and_poll_until_exit(&eapp_dir, &dump1090_loci_exit_f, &dump1090_child_pids);
+        let should_exit = dump1090_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        if should_exit {
+          break;
+        }
+        thread::sleep(time::Duration::from_millis(1800));
       }
+    });
+    
+    let usb_gps_loci_exit_f = loci_exit_f.clone();
+    let usb_gps_child_pids = child_pids.clone();
+    s.spawn(move |_| {
+      loop {
+        usb_gps_reader::start_and_poll_until_exit(&eapp_dir, &usb_gps_loci_exit_f, &usb_gps_child_pids);
+        let should_exit = usb_gps_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        if should_exit {
+          break;
+        }
+        thread::sleep(time::Duration::from_millis(1800));
+      }
+    });
 
-      break;
-    }
 
+    // This thread polls the DB app_events tabls for the most recent 20 events.
+    // If any of them have .name == "loci-shutting-down" we tell our admin procs to exit.
+    let db_poll_loci_exit_f = loci_exit_f.clone();
+    let db_poll_child_pids = child_pids.clone();
+    s.spawn(move |_| {
+      loop {
+        let mut should_exit = db_poll_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+
+        match crate::db::get_db_conn() {
+          Ok(db_conn) => {
+            // we only check the last 10 events where: now_ms - 5000 = 5 seconds ago
+            match db_conn.prepare("SELECT name FROM app_events WHERE ts > ((strftime('%s','now') * 1000.0) - 5000) ORDER BY ts DESC LIMIT 10") {
+              Ok(mut stmt) => {
+                match stmt.query(rusqlite::NO_PARAMS) {
+                  Ok(mut rows) => {
+                    while let Ok(Some(row)) = rows.next() {
+                      if let Ok(event_name) = row.get(0) {
+                        let event_name: String = event_name; // give rustqlite type info
+                        if event_name.contains("loci-shutting-down") {
+                          should_exit = true;
+                        }
+                      }
+                    }
+                  }
+                  Err(e) => {
+                    println!("{}:{} e={}", std::file!(), std::line!(), e);
+                  }
+                }
+              }
+              Err(e) => {
+                println!("{}:{} e={}", std::file!(), std::line!(), e);
+              }
+            }
+          }
+          Err(e) => {
+            println!("{}:{} e={}", std::file!(), std::line!(), e);
+          }
+        }
+
+        if should_exit {
+          db_poll_loci_exit_f.store(true, std::sync::atomic::Ordering::SeqCst);
+
+          // Attempt to kill each admin child process using a PID
+          if let Ok(child_pids) = db_poll_child_pids.read() {
+            for pid in child_pids.iter() {
+              if cfg!(target_os = "windows") {
+                Command::new("taskkill.exe")
+                  .arg("/pid")
+                  .arg(format!("{}", pid))
+                  .arg("/F")
+                  .status()
+                  .expect("could not start taskkill.exe");
+              }
+              else {
+                Command::new("kill")
+                  .arg(format!("{}", pid))
+                  .status()
+                  .expect("could not start taskkill.exe");
+              }
+            }
+          }
+
+
+          thread::sleep(time::Duration::from_millis(900));
+          break;
+        }
+        thread::sleep(time::Duration::from_millis(900));
+      }
+    });
+
+
+  });
+  if let Err(e) = r {
+    println!("Error joining threads: {:?}", e);
   }
 
 }

@@ -19,7 +19,7 @@ embed-eapp-tar = []
 
 
 [dependencies]
-crossbeam = "0.7"
+crossbeam = "0.8"
 
 web-view = { version = "0.6", features = [] }
 

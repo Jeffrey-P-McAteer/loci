@@ -9,6 +9,8 @@ use app_dirs;
 use rusqlite;
 
 use std::path::{PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 pub fn get_database_file() -> PathBuf {
   let mut db_dir = app_dirs::app_dir(
@@ -65,4 +67,86 @@ pub fn init_data_schema(conn: &mut rusqlite::Connection) {
   }
 }
 
+// Attempts to execute db writes N times, pausing M milliseconds
+// between retrues. Good for slow-moving event status updates.
+pub fn execute<P>(retries: usize, retry_delay_ms: u64, sql: &str, params: P)
+  -> rusqlite::Result<usize> 
+where
+    P: IntoIterator + Copy,
+    P::Item: rusqlite::types::ToSql,
+{
+  use std::{thread, time};
+  
+  let mut retries = retries;
+  loop {
+    if let Ok(con) = crate::db::get_init_db_conn() {
+      match con.execute(
+        sql,
+        params
+      ) {
+        Ok(rows) => {
+          return Ok(rows);
+        },
+        Err(e) => {
+          println!("db e={}", &e);
+          thread::sleep(time::Duration::from_millis(retry_delay_ms));
+          retries -= 1;
+          if retries < 1 {
+            return Err(e);
+          }
+        }
+      }
+    }
+    else {
+      thread::sleep(time::Duration::from_millis(retry_delay_ms));
+      retries -= 1;
+    }
+    if retries < 1 {
+      break;
+    }
+  }
+
+  return Err(
+    rusqlite::Error::InvalidParameterName("db::execute timed out".to_string())
+  );
+
+}
+
+// Attempts to remove all old/stale data.
+// Makes no guarantees that data is actually trimmed.
+pub fn trim_db() {
+  if let Ok(db_conn) = get_db_conn() {
+    let r = db_conn.execute_batch(r#"
+
+-- app events expire after ts + invalid_after_ts, or around 8 seconds
+DELETE FROM app_events WHERE (ts + invalid_after_ts) < (strftime('%s','now') * 1000.0);
+
+-- pos reps expire after 1 hour
+DELETE FROM pos_reps WHERE (ts + 3600000) < (strftime('%s','now') * 1000.0);
+
+
+    "#);
+    if let Err(e) = r {
+      println!("{}:{} e={}", std::file!(), std::line!(), e);
+    }
+  }
+}
+
+// Tries to trim db data every 10 seconds.
+pub fn trim_db_t(loci_exit_f: Arc<AtomicBool>) {
+  use std::{thread, time};
+  loop {
+    // sleep for 10 seconds, but check loci_exit_f every 1/2 second
+    for _ in 0..20 {
+      thread::sleep(time::Duration::from_millis(500));
+      let should_exit = loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+      if should_exit {
+        break;
+      }
+    }
+    
+    trim_db();
+
+  }
+}
 

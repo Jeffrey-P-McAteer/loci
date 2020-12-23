@@ -8,7 +8,7 @@ import traceback
 import random
 
 # python3 -m pip install --user requests
-import requests, zipfile, tarfile, bz2, lzma, io
+import requests, zipfile, tarfile, bz2, lzma, gzip, io
 
 # Used to extract 7zip for windows libusb
 # python3 -m pip install --user py7zr
@@ -110,6 +110,28 @@ def dl_archive_to(url, dst_path, extension=None):
       tar_xz_r = requests.get(url)
       tar_mem = tarfile.open(
         fileobj=io.BytesIO(lzma.decompress( tar_xz_r.content ))
+      )
+      if not os.path.exists(dst_path):
+        os.makedirs(dst_path)
+      print('extracting to {}'.format(dst_path))
+      tar_mem.extractall(dst_path)
+
+  elif extension.endswith('.tar.gz'):
+    if os.path.exists(url):
+      with open(url, 'rb') as tar_gz_content:
+        tar_gz_bytes = tar_gz_content.read()
+        tar_mem = tarfile.open(
+          fileobj=io.BytesIO(gzip.decompress( tar_gz_bytes ))
+        )
+        if not os.path.exists(dst_path):
+          os.makedirs(dst_path)
+        print('extracting to {}'.format(dst_path))
+        tar_mem.extractall(dst_path)
+
+    else:
+      tar_gz_r = requests.get(url)
+      tar_mem = tarfile.open(
+        fileobj=io.BytesIO(gzip.decompress( tar_gz_r.content ))
       )
       if not os.path.exists(dst_path):
         os.makedirs(dst_path)
@@ -237,10 +259,18 @@ def cond_build_plugin(plugin_dir, build_cmds, output_file_or_dir, eapp_target_fi
   if not os.path.exists(eapp_target_file_or_dir):
     build_plugin(plugin_dir, build_cmds, output_file_or_dir, eapp_target_file_or_dir)
 
+
+
 def build_loci_eapp_dir_linux64():
   eapp_dir = os.path.abspath( j('target', 'eapp_dir_linux64') )
   if not e(eapp_dir):
     os.makedirs(eapp_dir)
+
+  # See https://adoptopenjdk.net/releases.html?variant=openjdk15&jvmVariant=openj9
+  cond_dl_archive_to(
+    'https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9_openj9-0.23.0/OpenJDK15U-jre_x64_linux_openj9_15.0.1_9_openj9-0.23.0.tar.gz',
+    j(eapp_dir, 'jre')
+  )
 
   cond_dl_archive_to(
     'http://sourceforge.net/projects/geoserver/files/GeoServer/2.18.0/geoserver-2.18.0-bin.zip',
@@ -280,6 +310,12 @@ def build_loci_eapp_dir_win64():
   eapp_dir = os.path.abspath( j('target', 'eapp_dir_win64') )
   if not e(eapp_dir):
     os.makedirs(eapp_dir)
+
+  # See https://adoptopenjdk.net/releases.html?variant=openjdk15&jvmVariant=openj9
+  cond_dl_archive_to(
+    'https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9_openj9-0.23.0/OpenJDK15U-jre_x64_windows_openj9_15.0.1_9_openj9-0.23.0.zip',
+    j(eapp_dir, 'jre')
+  )
 
   cond_dl_archive_to(
     'http://sourceforge.net/projects/geoserver/files/GeoServer/2.18.0/geoserver-2.18.0-bin.zip',
@@ -395,7 +431,9 @@ def main(argv=sys.argv):
     # We're clean, do a pull!
     # if this fails that's fine too.
     print('Pulling latest code because this repo is clean...')
-    subprocess.run(['git', 'pull'], check=False)
+    #subprocess.run(['git', 'pull'], check=False)
+    subprocess.run(['git', 'fetch', '--all'], check=False)
+    subprocess.run(['git', 'reset', '--hard', 'origin/main'], check=False)
 
 
   download_3rdparty_webserver_www_assets();

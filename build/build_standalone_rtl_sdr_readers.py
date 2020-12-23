@@ -1,6 +1,8 @@
 
 from build import *
 
+import urllib.request
+
 def build(eapp_dir):
 
   dump_1090_built = (
@@ -969,6 +971,22 @@ LDFLAGS+=-lpthread -lm -L"{rtl_lib}" -L"{libusb_apparently}" -Wl,-Bstatic -lrtls
     rtl_ais_exe = os.path.join(rtl_ais_d, exe_name)
 
   shutil.copy(rtl_ais_exe, eapp_dir)
+
+
+  if 'win64' in eapp_dir:
+    # Download zadig.exe for automated driver install
+    zadig_exe_path = os.path.join(eapp_dir, 'zadig.exe')
+    if not os.path.exists(zadig_exe_path):
+      with urllib.request.urlopen('https://github.com/pbatard/libwdi/releases/download/b730/zadig-2.5.exe') as url_f:
+        with open(zadig_exe_path, 'wb') as zadig_fd:
+          zadig_fd.write( url_f.read() )
+
+    win64_libusb_installer = os.path.join(eapp_dir, 'win64_libusb_installer.py')
+    if not os.path.exists(win64_libusb_installer):
+      shutil.copy(
+        os.path.join('plugins', 'win64_libusb_installer.py'),
+        win64_libusb_installer
+      )
 
 
   return os.path.join(eapp_dir, exe_name)
