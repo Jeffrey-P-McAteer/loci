@@ -74,12 +74,12 @@ if __name__ == '__main__':
     
     # Run through values of DriverEdit2 until it contains 'libusb-win32'
     max_tries = 50
-    while not ( 'libusb-win32' in winspec['Zadig']['DriverEdit2'].get_value() ) and max_tries > 0:
+    while not ( 'libusb-win32' in winspec['DriverEdit2'].get_value() ) and max_tries > 0:
       max_tries -= 1
-      winspec['Zadig']['UpDown'].increment()
+      winspec['UpDown'].increment()
 
 
-    winspec['Zadig']['Install DriverButton'].click()
+    winspec['Install DriverButton'].click()
 
   except Exception as e:
     traceback.print_exc()
