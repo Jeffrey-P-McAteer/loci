@@ -60,22 +60,26 @@ if __name__ == '__main__':
 
   try:
     
+    winspec = app.top_window()
+
+    winspec.wait('visible')
+
     # Debugging
-    app.top_window().dump_tree()
+    winspec.dump_tree()
 
     # TODO rotate through all items from USB dropdown
-    # app.top_window()['ComboBox'].select("")
+    # winspec['ComboBox'].select("")
 
-    print(app.top_window()['DriverEdit2'])
+    print(winspec['DriverEdit2'])
 
     # Run through values of DriverEdit2 until it contains 'libusb-win32'
     max_tries = 50
-    while not ( 'libusb-win32' in app.top_window()['DriverEdit2'].get_value() ) and max_tries > 0:
+    while not ( 'libusb-win32' in winspec['DriverEdit2'].get_value() ) and max_tries > 0:
       max_tries -= 1
-      app.top_window()['UpDown'].increment()
+      winspec['UpDown'].increment()
 
 
-    app.top_window()['Install DriverButton'].click()
+    winspec['Install DriverButton'].click()
 
   except Exception as e:
     traceback.print_exc()
