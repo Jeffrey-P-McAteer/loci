@@ -47,7 +47,13 @@ except Exception as e:
 
 
 if __name__ == '__main__':
-  zadig_tmp_exe = os.path.join(tempfile.gettempdir(), 'zadig.exe')
+  
+  if 'ZADIG_EXE_PATH' in os.environ and os.path.exists(os.environ['ZADIG_EXE_PATH']):
+    zadig_tmp_exe = os.environ['ZADIG_EXE_PATH']
+
+  else:
+    zadig_tmp_exe = os.path.join(tempfile.gettempdir(), 'zadig.exe')
+  
   print('zadig_tmp_exe={}'.format(zadig_tmp_exe))
 
   if not os.path.exists(zadig_tmp_exe):
@@ -69,6 +75,7 @@ if __name__ == '__main__':
 
 
     # TODO rotate through all items from USB dropdown
+    # By default this is filtered so we only see things that look like RTL-SDRs
     for i in range(0, winspec['ComboBox'].item_count()):
       print('Installing driver for device {}'.format(i))
 
@@ -93,15 +100,12 @@ if __name__ == '__main__':
       popup_win.wait('visible')
       popup_win.dump_tree()
 
-      popup_win.wait_not('visible')
+      popup_win.wait_not('visible', timeout=120)
       print("Popup closed!")
 
 
   except Exception as e:
     traceback.print_exc()
-
-  # Debugging
-  time.sleep(10)
 
   app.kill()
 
