@@ -52,65 +52,71 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
       // then read any lines if they exist in stdout_buff.
       stdout_buff.extend_from_slice(&buff[0..n]);
 
-      while let Some(line_term_i) = stdout_buff.iter().position(|&r| r == '\n' as u8) {
-        let read_line_bytes = &buff[0..line_term_i];
-        let read_line = String::from_utf8_lossy(read_line_bytes);
-        let read_line = read_line.trim();
-        // read 0 -> '\n' as string, then trim stdout_buff.
-        stdout_buff.drain(0..line_term_i+1);
+      loop {
+        if let Some(line_term_i) = stdout_buff.iter().position(|&r| r == '\n' as u8) {
+          let read_line_bytes = &buff[0..line_term_i];
+          let read_line = String::from_utf8_lossy(read_line_bytes);
+          let read_line = read_line.trim();
+          // read 0 -> '\n' as string, then trim stdout_buff.
+          stdout_buff.drain(0..line_term_i+1);
 
-        // detect the (windows-only) case where a USB device needs a driver install and execute the
-        // win64_libusb_installer.py script
-        #[cfg(target_os = "windows")]
-        if read_line.contains("error querying device") {
-          if let Ok(eapp_dir) = std::env::var(crate::LOCI_EAPP_DIR_ENV_KEY) {
-            let python_script = format!("{}\\win64_libusb_installer.py", eapp_dir.trim());
-            print!("executing {}", &python_script[..]);
-            Command::new("python")
-              .args(&[&python_script[..]])
-              .status()
-              .expect("Could not run win64_libusb_installer.py");
+          // detect the (windows-only) case where a USB device needs a driver install and execute the
+          // win64_libusb_installer.py script
+          #[cfg(target_os = "windows")]
+          if read_line.contains("error querying device") {
+            if let Ok(eapp_dir) = std::env::var(crate::LOCI_EAPP_DIR_ENV_KEY) {
+              let python_script = format!("{}\\win64_libusb_installer.py", eapp_dir.trim());
+              print!("executing {}", &python_script[..]);
+              Command::new("python")
+                .args(&[&python_script[..]])
+                .status()
+                .expect("Could not run win64_libusb_installer.py");
+            }
+          }
+
+          if read_line.contains("no supported devices") || read_line.contains("error querying device") {
+            *dump1090_restart_flag = true;
+          }
+
+
+          if read_line.starts_with("*") {
+            // TODO Save last line as a record
+            println!("dump1090_record={:?}", dump1090_record);
+
+            dump1090_record.clear();
+
+            dump1090_record.insert("encoded-packet", read_line.to_string());
+
+          }
+          else if read_line.starts_with("Time") {
+            dump1090_record.insert("time", (&read_line[6..]).to_string());
+          }
+          else if read_line.starts_with("Baro altitude") {
+            dump1090_record.insert("altitude", (&read_line[15..]).to_string());
+          }
+          else if read_line.starts_with("CPR latitude") {
+            dump1090_record.insert("lat", (&read_line[14..]).to_string());
+          }
+          else if read_line.starts_with("CPR longitude") {
+            dump1090_record.insert("lon", (&read_line[15..]).to_string());
+          }
+          else if read_line.starts_with("CPR type") {
+            dump1090_record.insert("type", (&read_line[9..]).to_string());
+          }
+          else if read_line.starts_with("RSSI") {
+            dump1090_record.insert("rssi", (&read_line[6..]).to_string());
+          }
+          else if read_line.starts_with("DF:") {
+            dump1090_record.insert("id-line", (&read_line[..]).to_string());
+          }
+          else if read_line.len() > 2 {
+            println!("unused dump1090 line = {}", read_line);
           }
         }
-
-        if read_line.contains("no supported devices") || read_line.contains("error querying device") {
-          *dump1090_restart_flag = true;
+        else {
+          break;
         }
 
-
-        if read_line.starts_with("*") {
-          // TODO Save last line as a record
-          println!("dump1090_record={:?}", dump1090_record);
-
-          dump1090_record.clear();
-
-          dump1090_record.insert("encoded-packet", read_line.to_string());
-
-        }
-        else if read_line.starts_with("Time") {
-          dump1090_record.insert("time", (&read_line[6..]).to_string());
-        }
-        else if read_line.starts_with("Baro altitude") {
-          dump1090_record.insert("altitude", (&read_line[15..]).to_string());
-        }
-        else if read_line.starts_with("CPR latitude") {
-          dump1090_record.insert("lat", (&read_line[14..]).to_string());
-        }
-        else if read_line.starts_with("CPR longitude") {
-          dump1090_record.insert("lon", (&read_line[15..]).to_string());
-        }
-        else if read_line.starts_with("CPR type") {
-          dump1090_record.insert("type", (&read_line[9..]).to_string());
-        }
-        else if read_line.starts_with("RSSI") {
-          dump1090_record.insert("rssi", (&read_line[6..]).to_string());
-        }
-        else if read_line.starts_with("DF:") {
-          dump1090_record.insert("id-line", (&read_line[..]).to_string());
-        }
-        else if read_line.len() > 2 {
-          println!("unused dump1090 line = {}", read_line);
-        }
       }
 
       // remove '\r' and '\n' chars in the buffer for safer parsing next poll()
