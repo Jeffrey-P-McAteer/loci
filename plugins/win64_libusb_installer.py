@@ -61,7 +61,7 @@ if __name__ == '__main__':
   try:
     
     # Debugging
-    app.top_window().print_control_identifiers()
+    app.top_window().dump_tree()
 
     # TODO rotate through all items from USB dropdown
     # app.top_window()['ComboBox'].select("")
