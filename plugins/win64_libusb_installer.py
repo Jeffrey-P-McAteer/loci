@@ -15,6 +15,7 @@ import subprocess
 import urllib.request
 import tempfile
 import time
+import traceback
 
 libusb_install_py_pkgs = os.path.join(tempfile.gettempdir(), 'libusb_install_py_pkgs')
 sys.path.append(libusb_install_py_pkgs)
@@ -56,8 +57,18 @@ if __name__ == '__main__':
 
   # Now we use pywinauto to automate execution
   app = Application().start(zadig_tmp_exe)
-  
-  time.sleep(10)
+
+  try:
+    
+    app.print_control_identifiers()
+    
+    time.sleep(10)
+
+  except Exception as e:
+    traceback.print_exc()
+
+
+  app.kill()
 
 
 
