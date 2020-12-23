@@ -81,6 +81,19 @@ if __name__ == '__main__':
 
     winspec['Install DriverButton'].click()
 
+    # Wait for 'Installing Driver' window to appear + wait for it to exit
+    while app.top_window() == winspec:
+      print("Waiting for popup...")
+      time.sleep(0.5)
+
+    print("Popup opened!")
+    popup_win = app.top_window()
+    popup_win.wait('visible')
+    popup_win.dump_tree()
+
+    time.sleep(10)
+
+
   except Exception as e:
     traceback.print_exc()
 
