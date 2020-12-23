@@ -25,24 +25,22 @@ try:
   from pywinauto.application import Application
 except Exception as e:
   print(e)
-  print('Attempting to auto-install dependencies using -m pip...')
+  print('Attempting to auto-install dependencies using -m pip --user...')
 
-  print('libusb_install_py_pkgs={}'.format(libusb_install_py_pkgs))
+  # print('libusb_install_py_pkgs={}'.format(libusb_install_py_pkgs))
 
-  if not os.path.exists(libusb_install_py_pkgs):
-    os.makedirs(libusb_install_py_pkgs)
+  # if not os.path.exists(libusb_install_py_pkgs):
+  #   os.makedirs(libusb_install_py_pkgs)
 
+  # subprocess.run([
+  #   sys.executable, '-m', 'pip', 'install', '--target', libusb_install_py_pkgs, 'pywinauto', 'pywin32', 'pypiwin32'
+  # ])
+
+  # Small TODO: don't use the user's home directory for these packages;
+  # TBH not crying much over this one.
   subprocess.run([
-    sys.executable, '-m', 'pip', 'install', '--target', libusb_install_py_pkgs, 'pywinauto', 'pywin32', 'pypiwin32'
+    sys.executable, '-m', 'pip', 'install', '--user', 'pywinauto'
   ])
-
-  # See https://github.com/mhammond/pywin32 for why this command is necessary
-  # must be run as root, which this script already as a dependency on.
-  subprocess.run([
-    sys.executable, os.path.join(libusb_install_py_pkgs, 'bin', 'pywin32_postinstall.py'), '-install'
-  ],
-    cwd=os.path.join(libusb_install_py_pkgs, 'pywin32_system32')
-  )
 
   from pywinauto.application import Application
 
@@ -57,7 +55,7 @@ if __name__ == '__main__':
         zadig_tmp_f.write( url_f.read() )
 
   # Now we use pywinauto to automate execution
-  app = Application().start(zadig_tmp_f)
+  app = Application().start(zadig_tmp_exe)
   
   time.sleep(10)
 
