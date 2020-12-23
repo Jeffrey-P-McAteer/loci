@@ -981,6 +981,13 @@ LDFLAGS+=-lpthread -lm -L"{rtl_lib}" -L"{libusb_apparently}" -Wl,-Bstatic -lrtls
         with open(zadig_exe_path, 'wb') as zadig_fd:
           zadig_fd.write( url_f.read() )
 
+    win64_libusb_installer = os.path.join(eapp_dir, 'win64_libusb_installer.py')
+    if not os.path.exists(win64_libusb_installer):
+      shutil.copy(
+        os.path.join('plugins', 'win64_libusb_installer.py'),
+        win64_libusb_installer
+      )
+
 
   return os.path.join(eapp_dir, exe_name)
 
