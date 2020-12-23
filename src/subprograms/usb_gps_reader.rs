@@ -56,32 +56,37 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut ChildStdout, stdout_buff
 
       loop {
         if let Some(line_term_i) = stdout_buff.iter().position(|&r| r == '\n' as u8) {
-          let read_line_bytes = &stdout_buff[0..line_term_i];
-          let read_line = String::from_utf8_lossy(read_line_bytes);
-          let read_line = read_line.trim();
-          // read 0 -> '\n' as string, then trim stdout_buff.
-          stdout_buff.drain(0..line_term_i+1);
+          { // read from vec + process string
+            let read_line_bytes = &stdout_buff[0..line_term_i];
+            let read_line = String::from_utf8_lossy(read_line_bytes);
+            let read_line = read_line.trim();
 
-          // NMEA packets must end in RN to be parsed
-          let read_line = format!("{}\r\n", read_line.trim());
+            // NMEA packets must end in RN to be parsed
+            let read_line = format!("{}\r\n", read_line.trim());
 
-          println!("read_line={}", &read_line[..]);
+            println!("read_line={}", &read_line[..]);
 
-          // TODO detect + use _usb_gps_restart_flag when GPS is detected to be broken
-          
-          for result in parser.parse_from_bytes(read_line.as_bytes()) {
-            match result {
-              Ok(ParseResult::RMC(Some(rmc))) => {
-                println!("Got RMC packet: {:?}", rmc);
-              },
-              
-              Ok(_p) => {
-                //println!("Got other packet: {:?}", p);
-              }
-              Err(e) => {
-                println!("nmea parse e={}", e);
+            // TODO detect + use _usb_gps_restart_flag when GPS is detected to be broken
+            
+            for result in parser.parse_from_bytes(read_line.as_bytes()) {
+              match result {
+                Ok(ParseResult::RMC(Some(rmc))) => {
+                  println!("Got RMC packet: {:?}", rmc);
+                },
+                
+                Ok(_p) => {
+                  //println!("Got other packet: {:?}", p);
+                }
+                Err(e) => {
+                  println!("nmea parse e={}", e);
+                }
               }
             }
+
+            
+          }
+          { // mutate (trim) vec
+            stdout_buff.drain(0..line_term_i+1);
           }
 
         }
