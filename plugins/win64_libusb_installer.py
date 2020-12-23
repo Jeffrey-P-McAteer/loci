@@ -69,29 +69,32 @@ if __name__ == '__main__':
 
 
     # TODO rotate through all items from USB dropdown
-    # winspec['ComboBox'].select("")
+    for i in range(0, winspec['ComboBox'].item_count()):
+      print('Installing driver for device {}'.format(i))
 
+      winspec['ComboBox'].select(i)
+      time.sleep(0.25)
 
-    # Run through values of DriverEdit2 until it contains 'libusb-win32'
-    max_tries = 50
-    while not ( 'libusb-win32' in winspec['DriverEdit2'].text_block() ) and max_tries > 0:
-      max_tries -= 1
-      winspec['UpDown'].increment()
+      # Run through values of DriverEdit2 until it contains 'libusb-win32'
+      max_tries = 12
+      while not ( 'libusb-win32' in winspec['DriverEdit2'].text_block() ) and max_tries > 0:
+        max_tries -= 1
+        winspec['UpDown'].increment()
 
+      winspec['Install DriverButton'].click()
 
-    winspec['Install DriverButton'].click()
+      # Wait for 'Installing Driver' window to appear + wait for it to exit
+      while app.top_window() == winspec:
+        print("Waiting for popup...")
+        time.sleep(0.5)
 
-    # Wait for 'Installing Driver' window to appear + wait for it to exit
-    while app.top_window() == winspec:
-      print("Waiting for popup...")
-      time.sleep(0.5)
+      print("Popup opened!")
+      popup_win = app.top_window()
+      popup_win.wait('visible')
+      popup_win.dump_tree()
 
-    print("Popup opened!")
-    popup_win = app.top_window()
-    popup_win.wait('visible')
-    popup_win.dump_tree()
-
-    time.sleep(10)
+      popup_win.wait_not('visible')
+      print("Popup closed!")
 
 
   except Exception as e:
