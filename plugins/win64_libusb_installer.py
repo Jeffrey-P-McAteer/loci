@@ -71,6 +71,8 @@ if __name__ == '__main__':
     # TODO rotate through all items from USB dropdown
     # winspec['ComboBox'].select("")
 
+    print(winspec['DriverEdit2'])
+    print(winspec['DriverEdit2'].__class__.__name__)
     
     # Run through values of DriverEdit2 until it contains 'libusb-win32'
     max_tries = 50
