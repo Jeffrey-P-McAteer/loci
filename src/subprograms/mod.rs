@@ -414,6 +414,9 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     }
     if dump1090_restart_flag {
       println!("Restarting dump1090...");
+      if let Err(e) = dump1090_p.kill() {
+        println!("Error killing: {}", e);
+      }
       dump1090_p = if eapp_enabled("dump1090") {
         dump1090::start(eapp_dir)
       }
@@ -429,6 +432,9 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     }
     if usb_gps_restart_flag {
       println!("Restarting usb_gps...");
+      if let Err(e) = usb_gps_p.kill() {
+        println!("Error killing: {}", e);
+      }
       usb_gps_p = if eapp_enabled("usb_gps") {
         usb_gps_reader::start(eapp_dir)
       }
@@ -448,7 +454,11 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     if should_exit {
       
       if let Err(e) = dump1090_p.kill() {
-        println!("Error killng: {}", e);
+        println!("Error killing: {}", e);
+      }
+
+      if let Err(e) = usb_gps_p.kill() {
+        println!("Error killing: {}", e);
       }
 
       break;
