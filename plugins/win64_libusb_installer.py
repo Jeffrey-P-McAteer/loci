@@ -19,7 +19,7 @@ import time
 libusb_install_py_pkgs = os.path.join(tempfile.gettempdir(), 'libusb_install_py_pkgs')
 sys.path.append(libusb_install_py_pkgs)
 
-# python -m pip install --target=DIRECTORY_NAME six comtypes pywin32
+# python -m pip install --target=DIRECTORY_NAME six comtypes pypiwin32
 # python -m pip install --user pywinauto
 try:
   from pywinauto.application import Application
@@ -33,7 +33,7 @@ except Exception as e:
     os.makedirs(libusb_install_py_pkgs)
 
   subprocess.run([
-    sys.executable, '-m', 'pip', 'install', '--target={}'.format(libusb_install_py_pkgs), 'pywinauto'
+    sys.executable, '-m', 'pip', 'install', '--target={}'.format(libusb_install_py_pkgs), 'pywinauto', 'pypiwin32'
   ])
 
   from pywinauto.application import Application
