@@ -44,6 +44,10 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
 
   match dump1090_stdout.read(&mut buff) {
     Ok(n) => {
+      if n == 0 { // EOF
+        *dump1090_restart_flag = true;
+      }
+      
       // append buff[0..n] to stdout_buff,
       // then read any lines if they exist in stdout_buff.
       stdout_buff.extend_from_slice(&buff[0..n]);
