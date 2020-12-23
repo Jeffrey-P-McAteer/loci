@@ -410,6 +410,9 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     if dump1090::poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_stdout_buff, &mut dump1090_record, &mut dump1090_restart_flag) {
       should_exit = false;
     }
+    else {
+      dump1090_restart_flag = true; // process exited, restart
+    }
     if dump1090_restart_flag {
       println!("Restarting dump1090...");
       if let Err(e) = dump1090_p.kill() {
@@ -424,8 +427,12 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
       dump1090_restart_flag = false;
     }
 
+
     if usb_gps_reader::poll(&mut usb_gps_p, &mut usb_gps_stdout, &mut usb_gps_stdout_buff, &mut usb_gps_restart_flag) {
       should_exit = false;
+    }
+    else {
+      usb_gps_restart_flag = true; // process exited, restart
     }
     if usb_gps_restart_flag {
       println!("Restarting usb_gps...");
