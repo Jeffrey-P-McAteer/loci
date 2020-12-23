@@ -60,7 +60,21 @@ if __name__ == '__main__':
 
   try:
     
+    # Debugging
     app.top_window().print_control_identifiers()
+
+    # TODO rotate through all items from USB dropdown
+    # app.top_window()['ComboBox'].select("")
+
+
+    # Run through values of DriverEdit2 until it contains 'libusb-win32'
+    max_tries = 50
+    while not ( 'libusb-win32' in app.top_window()['DriverEdit2'].get_value() ) and max_tries > 0:
+      max_tries -= 1
+      app.top_window()['UpDown'].increment()
+
+
+    app.top_window()['Install DriverButton'].click()
     
     time.sleep(10)
 
