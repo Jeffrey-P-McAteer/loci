@@ -64,18 +64,19 @@ if __name__ == '__main__':
 
     winspec.wait('visible')
 
+    if 'Zadig' in winspec:
+      winspec = winspec['Zadig']
+
     # Debugging
     winspec.dump_tree()
 
     # TODO rotate through all items from USB dropdown
     # winspec['ComboBox'].select("")
 
-    print(winspec['Zadig'].child_window(best_match='DriverEdit2')) # also Edit9
-    print(winspec['Zadig'].child_window(best_match='Edit9'))
-
+    
     # Run through values of DriverEdit2 until it contains 'libusb-win32'
     max_tries = 50
-    while not ( 'libusb-win32' in winspec['Zadig']['DriverEdit2'].get_value() ) and max_tries > 0:
+    while not ( 'libusb-win32' in winspec['DriverEdit2'].get_value() ) and max_tries > 0:
       max_tries -= 1
       winspec['UpDown'].increment()
 
