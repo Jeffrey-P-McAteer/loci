@@ -54,7 +54,7 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
 
       loop {
         if let Some(line_term_i) = stdout_buff.iter().position(|&r| r == '\n' as u8) {
-          let read_line_bytes = &buff[0..line_term_i];
+          let read_line_bytes = &stdout_buff[0..line_term_i];
           let read_line = String::from_utf8_lossy(read_line_bytes);
           let read_line = read_line.trim();
           // read 0 -> '\n' as string, then trim stdout_buff.
