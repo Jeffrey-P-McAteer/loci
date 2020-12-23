@@ -76,12 +76,12 @@ if __name__ == '__main__':
 
 
     app.top_window()['Install DriverButton'].click()
-    
-    time.sleep(10)
 
   except Exception as e:
     traceback.print_exc()
 
+  # Debugging
+  time.sleep(10)
 
   app.kill()
 
