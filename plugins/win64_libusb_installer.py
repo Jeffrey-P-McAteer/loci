@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
   try:
     
-    app.print_control_identifiers()
+    app.top_window().print_control_identifiers()
     
     time.sleep(10)
 
