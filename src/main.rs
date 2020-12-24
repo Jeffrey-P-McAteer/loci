@@ -12,6 +12,7 @@ use app_dirs;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc};
 use std::{thread, time};
+use std::env;
 
 // Responsible for extracting and executing
 // seperate OS processes which Loci expects to be available.
@@ -75,6 +76,10 @@ fn main() {
     setup_signal_handlers(loci_exit_f.clone());
   }
 
+  // Rather than hard-coding stuff in subprograms, we add the ./bin/ directories
+  // of sub-programs to the PATH so we can run "java.exe" and invoke our bundled copy.
+  add_eapp_bin_dirs_to_path();
+
   // If we assign LOCI_NO_ADMIN and inadventantly call ourselves
   // as admin the LOCI_NO_ADMIN state takes priority and we do
   // not run admin functions.
@@ -119,6 +124,41 @@ fn main() {
   thread::sleep(time::Duration::from_millis(1600));
   for _ in 0..9 { println!(""); } // whitespace makes reading logs cleaner
   std::process::exit(0);
+
+}
+
+fn add_eapp_bin_dirs_to_path() {
+  let eapp_dir = app_dirs::app_dir(
+    app_dirs::AppDataType::UserCache, &crate::APP_INFO, "eapp"
+  ).expect("Could not create eapp directory");
+
+  // Here we store copies of all out sub-program bin/ directories
+  let mut paths = vec![];
+
+  paths.push( eapp_dir.join("python") ); // python.exe lives here
+  paths.push( eapp_dir.join("jre").join("bin") ); // java.exe lives here
+
+  // Now we prepend that to the existing PATH
+
+  let os_path;
+  if let Some(env_os_path) = env::var_os("PATH") {
+    os_path = env_os_path;
+  }
+  else {
+    os_path = std::ffi::OsString::new();
+  }
+
+  let mut os_paths = env::split_paths(&os_path).collect::<Vec<_>>();
+  paths.append(&mut os_paths); // os_paths now empty
+
+  match std::env::join_paths(paths) {
+    Ok(new_os_paths) => {
+      env::set_var("PATH", new_os_paths);
+    }
+    Err(e) => {
+      println!("Could not join paths for new PATH: {}", e);
+    }
+  }
 
 }
 
@@ -230,7 +270,6 @@ fn gui_main() -> Result<(), Box<dyn std::error::Error>> {
 fn hide_console_on_windows() {
   #[cfg(target_os = "windows")]
   {
-    use std::env;
     if let Ok(val) = env::var("NO_CONSOLE_DETATCH") {
       if val.contains("y") || val.contains("Y") || val.contains("1") {
         return;
