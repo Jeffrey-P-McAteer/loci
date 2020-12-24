@@ -7,7 +7,43 @@
 
 use std::path::{Path};
 use std::process::{Command, Child, Stdio, ChildStdout};
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
+pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>) {
+  let mut usb_gps_p = start(eapp_dir);
+
+  match usb_gps_p.stdout.take() {
+    Some(mut usb_gps_stdout) => {
+      let mut usb_gps_stdout_buff = vec![];
+      let mut usb_gps_restart_flag = false;
+
+      loop {
+        let should_exit = loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        if should_exit {
+          if let Err(e) = usb_gps_p.kill() {
+            println!("Err killing usb_gps_p: {}", e);
+          }
+        }
+
+        if !poll(&mut usb_gps_p, &mut usb_gps_stdout, &mut usb_gps_stdout_buff, &mut usb_gps_restart_flag) {
+          break;
+        }
+
+        if usb_gps_restart_flag {
+          if let Err(e) = usb_gps_p.kill() {
+            println!("Err killing usb_gps_p: {}", e);
+          }
+          break;
+        }
+        
+      }
+    }
+    None => {
+      println!("Err: no usb_gps_p.stdout");
+    }
+  }
+}
 
 pub fn start(eapp_dir: &Path) -> Child {
 

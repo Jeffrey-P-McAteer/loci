@@ -17,8 +17,6 @@ use std::sync::atomic::AtomicBool;
 
 use std::process::{Command, Child};
 
-use std::collections::HashMap;
-
 pub mod geoserver;
 pub mod postgis;
 pub mod dump1090;
@@ -383,90 +381,42 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
   println!("Executing privledged processes...");
 
-
-  let mut dump1090_p = if eapp_enabled("dump1090") {
-    dump1090::start(eapp_dir)
-  }
-  else { dummy_proc() };
-  let mut dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
-  let mut dump1090_stdout_buff = vec![];
-  let mut dump1090_record: HashMap<&str, String> = HashMap::new();
-  let mut dump1090_restart_flag = false;
-
-
-  let mut usb_gps_p = if eapp_enabled("usb_gps") {
-    usb_gps_reader::start(eapp_dir)
-  }
-  else { dummy_proc() };
-  let mut usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
-  let mut usb_gps_stdout_buff = vec![];
-  let mut usb_gps_restart_flag = false;
-
-
-  // Iterate all processes, possibly processing stdout and writing information to DB
-  loop {
-    let mut should_exit = true;
+  // We used to have a single polling loop,
+  // but the fundamental blocking nature of windows read() syscalls
+  // makes this a bad strategy. Instead we run a thread for each
+  // process and re-start them on exit.
+  // We also pass loci_exit_f in so when this process exits we can cleanly
+  // signal to the children to exit.
+  let r = crossbeam::scope(move|s| {
     
-    if dump1090::poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_stdout_buff, &mut dump1090_record, &mut dump1090_restart_flag) {
-      should_exit = false;
-    }
-    else {
-      dump1090_restart_flag = true; // process exited, restart
-    }
-    if dump1090_restart_flag {
-      println!("Restarting dump1090...");
-      if let Err(e) = dump1090_p.kill() {
-        println!("Error killing: {}", e);
+
+    let dump_1090_loci_exit_f = loci_exit_f.clone();
+    s.spawn(move |_| {
+      loop {
+        dump1090::start_and_poll_until_exit(&eapp_dir, &dump_1090_loci_exit_f);
+        let should_exit = dump_1090_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        if should_exit {
+          break;
+        }
+        thread::sleep(time::Duration::from_millis(900));
       }
-      dump1090_p = if eapp_enabled("dump1090") {
-        dump1090::start(eapp_dir)
+    });
+    
+    let usb_gps_loci_exit_f = loci_exit_f.clone();
+    s.spawn(move |_| {
+      loop {
+        usb_gps_reader::start_and_poll_until_exit(&eapp_dir, &usb_gps_loci_exit_f);
+        let should_exit = usb_gps_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        if should_exit {
+          break;
+        }
+        thread::sleep(time::Duration::from_millis(900));
       }
-      else { dummy_proc() };
-      dump1090_stdout = dump1090_p.stdout.take().expect("no dump1090_p.stdout");
-      dump1090_record = HashMap::new();
-      dump1090_restart_flag = false;
-    }
+    });
 
-
-    if usb_gps_reader::poll(&mut usb_gps_p, &mut usb_gps_stdout, &mut usb_gps_stdout_buff, &mut usb_gps_restart_flag) {
-      should_exit = false;
-    }
-    else {
-      usb_gps_restart_flag = true; // process exited, restart
-    }
-    if usb_gps_restart_flag {
-      println!("Restarting usb_gps...");
-      if let Err(e) = usb_gps_p.kill() {
-        println!("Error killing: {}", e);
-      }
-      usb_gps_p = if eapp_enabled("usb_gps") {
-        usb_gps_reader::start(eapp_dir)
-      }
-      else { dummy_proc() };
-      usb_gps_stdout = usb_gps_p.stdout.take().expect("no usb_gps_p.stdout");
-      usb_gps_restart_flag = false;
-    }
-
-
-    if loci_exit_f.load(std::sync::atomic::Ordering::SeqCst) {
-      should_exit = true;
-    }
-
-    //println!("admin poll should_exit={}", should_exit);
-
-    if should_exit {
-      
-      if let Err(e) = dump1090_p.kill() {
-        println!("Error killing: {}", e);
-      }
-
-      if let Err(e) = usb_gps_p.kill() {
-        println!("Error killing: {}", e);
-      }
-
-      break;
-    }
-
+  });
+  if let Err(e) = r {
+    println!("Error joining threads: {:?}", e);
   }
 
 }

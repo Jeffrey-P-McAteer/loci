@@ -8,7 +8,45 @@
 use std::path::{Path};
 use std::process::{Command, Child, Stdio, ChildStdout};
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
+
+pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>) {
+  let mut dump1090_p = start(eapp_dir);
+
+  match dump1090_p.stdout.take() {
+    Some(mut dump1090_stdout) => {
+      let mut dump1090_stdout_buff = vec![];
+      let mut dump1090_record: HashMap<&str, String> = HashMap::new();
+      let mut dump1090_restart_flag = false;
+
+      loop {
+        let should_exit = loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        if should_exit {
+          if let Err(e) = dump1090_p.kill() {
+            println!("Err killing dump1090_p: {}", e);
+          }
+        }
+
+        if !poll(&mut dump1090_p, &mut dump1090_stdout, &mut dump1090_stdout_buff, &mut dump1090_record, &mut dump1090_restart_flag) {
+          break;
+        }
+
+        if dump1090_restart_flag {
+          if let Err(e) = dump1090_p.kill() {
+            println!("Err killing dump1090_p: {}", e);
+          }
+          break;
+        }
+        
+      }
+    }
+    None => {
+      println!("Err: no dump1090.stdout");
+    }
+  }
+}
 
 pub fn start(eapp_dir: &Path) -> Child {
 
