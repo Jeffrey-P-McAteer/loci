@@ -440,6 +440,7 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
         if should_exit {
           db_poll_loci_exit_f.store(true, std::sync::atomic::Ordering::SeqCst);
+          thread::sleep(time::Duration::from_millis(900));
           break;
         }
         thread::sleep(time::Duration::from_millis(900));
