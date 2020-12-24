@@ -135,8 +135,10 @@ fn add_eapp_bin_dirs_to_path() {
   // Here we store copies of all out sub-program bin/ directories
   let mut paths = vec![];
 
-  paths.push( eapp_dir.join("python") ); // python.exe lives here
+  paths.push( eapp_dir.join("python") );          // python.exe lives here
   paths.push( eapp_dir.join("jre").join("bin") ); // java.exe lives here
+  paths.push( eapp_dir.join("postgres").join("bin") ); // postgres.exe and also winpthread.dll is here
+
 
   // Now we prepend that to the existing PATH
 
