@@ -8,12 +8,16 @@
 use std::path::{Path};
 use std::process::{Command, Child, Stdio, ChildStdout};
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::AtomicBool;
 
 
-pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>) {
+pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>, child_pids: &Arc<RwLock<Vec<u32>>>) {
   let mut dump1090_p = start(eapp_dir);
+
+  if let Ok(mut child_pids) = child_pids.write() {
+    child_pids.push( dump1090_p.id() );
+  }
 
   match dump1090_p.stdout.take() {
     Some(mut dump1090_stdout) => {

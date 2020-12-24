@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 
 use std::env;
 use std::{thread, time};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::AtomicBool;
 
 use std::process::{Command, Child};
@@ -374,12 +374,14 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
   // signal to the children to exit.
   let r = crossbeam::scope(move|s| {
     
+    let child_pids: Arc<RwLock<Vec<u32>>> = Arc::new(RwLock::new(vec![]));
 
-    let dump_1090_loci_exit_f = loci_exit_f.clone();
+    let dump1090_loci_exit_f = loci_exit_f.clone();
+    let dump1090_child_pids = child_pids.clone();
     s.spawn(move |_| {
       loop {
-        dump1090::start_and_poll_until_exit(&eapp_dir, &dump_1090_loci_exit_f);
-        let should_exit = dump_1090_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+        dump1090::start_and_poll_until_exit(&eapp_dir, &dump1090_loci_exit_f, &dump1090_child_pids);
+        let should_exit = dump1090_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
         if should_exit {
           break;
         }
@@ -388,9 +390,10 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     });
     
     let usb_gps_loci_exit_f = loci_exit_f.clone();
+    let usb_gps_child_pids = child_pids.clone();
     s.spawn(move |_| {
       loop {
-        usb_gps_reader::start_and_poll_until_exit(&eapp_dir, &usb_gps_loci_exit_f);
+        usb_gps_reader::start_and_poll_until_exit(&eapp_dir, &usb_gps_loci_exit_f, &usb_gps_child_pids);
         let should_exit = usb_gps_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
         if should_exit {
           break;
@@ -403,6 +406,7 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
     // This thread polls the DB app_events tabls for the most recent 20 events.
     // If any of them have .name == "loci-shutting-down" we tell our admin procs to exit.
     let db_poll_loci_exit_f = loci_exit_f.clone();
+    let db_poll_child_pids = child_pids.clone();
     s.spawn(move |_| {
       loop {
         let mut should_exit = db_poll_loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
@@ -440,6 +444,27 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
 
         if should_exit {
           db_poll_loci_exit_f.store(true, std::sync::atomic::Ordering::SeqCst);
+
+          // Attempt to kill each admin child process using a PID
+          if let Ok(child_pids) = db_poll_child_pids.read() {
+            for pid in child_pids.iter() {
+              if cfg!(target_os = "windows") {
+                Command::new("taskkill.exe")
+                  .arg("/pid")
+                  .arg(format!("{}", pid))
+                  .status()
+                  .expect("could not start taskkill.exe");
+              }
+              else {
+                Command::new("kill")
+                  .arg(format!("{}", pid))
+                  .status()
+                  .expect("could not start taskkill.exe");
+              }
+            }
+          }
+
+
           thread::sleep(time::Duration::from_millis(900));
           break;
         }

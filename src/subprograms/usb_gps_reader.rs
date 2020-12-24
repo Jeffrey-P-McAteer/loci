@@ -7,11 +7,15 @@
 
 use std::path::{Path};
 use std::process::{Command, Child, Stdio, ChildStdout};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::AtomicBool;
 
-pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>) {
+pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>, child_pids: &Arc<RwLock<Vec<u32>>>) {
   let mut usb_gps_p = start(eapp_dir);
+
+  if let Ok(mut child_pids) = child_pids.write() {
+    child_pids.push( usb_gps_p.id() );
+  }
 
   match usb_gps_p.stdout.take() {
     Some(mut usb_gps_stdout) => {
