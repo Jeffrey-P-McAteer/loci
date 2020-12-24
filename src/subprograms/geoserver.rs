@@ -811,7 +811,16 @@ exec "$_RUNJAVA" $JAVA_OPTS $MARLIN_ENABLER -DGEOSERVER_DATA_DIR="$GEOSERVER_DAT
       return crate::subprograms::dummy_proc();
     }
 
-    return Command::new(&split[0])
+    let mut java_exe_path: String = split[0].to_string();
+
+    if cfg!(target_os = "windows") {
+      if java_exe_path.contains("java.exe") {
+        // Use the java wrapper to prevent CLI GUI from opening
+        java_exe_path = java_exe_path.replace("java.exe", "javaw.exe");
+      }
+    }
+
+    return Command::new(&java_exe_path[..])
         .current_dir(&geoserver_home.to_string_lossy()[..])
         .env("GEOSERVER_HOME", &geoserver_home.to_string_lossy()[..])
         .env("GEOSERVER_DATA_DIR", &geoserver_data_dir.to_string_lossy()[..])
