@@ -110,3 +110,32 @@ where
 
 }
 
+// Attempts to remove all old/stale data.
+// Makes no guarantees that data is actually trimmed.
+pub fn trim_db() {
+  if let Ok(db_conn) = get_db_conn() {
+    let r = db_conn.execute_batch(r#"
+
+-- app events expire after ts + invalid_after_ts, or around 8 seconds
+DROP FROM app_events WHERE (ts + invalid_after_ts) < (strftime('%s','now') * 1000.0) LIMIT 100;
+
+-- pos reps expire after 1 hour
+DROP FROM pos_reps WHERE (ts + 3600000) < (strftime('%s','now') * 1000.0) LIMIT 100;
+
+
+    "#);
+    if let Err(e) = r {
+      println!("{}:{} e={}", std::file!(), std::line!(), e);
+    }
+  }
+}
+
+// Tries to trim db data every 10 seconds.
+pub fn trim_db_t() {
+  use std::{thread, time};
+  loop {
+    thread::sleep(time::Duration::from_millis(10000));
+    trim_db();
+  }
+}
+
