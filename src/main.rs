@@ -67,6 +67,7 @@ fn main() {
       thread::sleep(time::Duration::from_millis(10 * 60 * 1000));
       loci_exit_f_l.store(true, Ordering::SeqCst);
       thread::sleep(time::Duration::from_millis(1600));
+      on_proc_exit();
       std::process::exit(0);
     });
   }
@@ -119,6 +120,7 @@ fn main() {
 
   // When gui exits tell children to exit
   loci_exit_f.store(true, Ordering::SeqCst);
+  on_proc_exit();
 
   println!("giving sub-programs 1600ms to exit...");
   thread::sleep(time::Duration::from_millis(1600));
@@ -126,6 +128,20 @@ fn main() {
   std::process::exit(0);
 
 }
+
+
+fn on_proc_exit() {
+  // Write to the DB that Loci should exit (all other apps may query this w/ timestamp)
+  let r = crate::db::execute(
+    20, 100, // up to 2 seconds of retries
+    "INSERT INTO app_events (name) VALUES (?1)",
+    rusqlite::params!["loci-shutting-down"]
+  );
+  if let Err(e) = r {
+    println!("error writing loci-shutting-down: {}", e);
+  }
+}
+
 
 fn add_eapp_bin_dirs_to_path() {
   let eapp_dir = app_dirs::app_dir(
@@ -178,6 +194,7 @@ fn bg_main(loci_exit_f: Arc<AtomicBool>) {
   });
   if let Err(e) = r {
     println!("Error joining bg threads: {:?}", e);
+    on_proc_exit();
     std::process::exit(1);
   }
 }

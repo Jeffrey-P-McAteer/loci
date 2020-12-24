@@ -65,4 +65,48 @@ pub fn init_data_schema(conn: &mut rusqlite::Connection) {
   }
 }
 
+// Attempts to execute db writes N times, pausing M milliseconds
+// between retrues. Good for slow-moving event status updates.
+pub fn execute<P>(retries: usize, retry_delay_ms: u64, sql: &str, params: P)
+  -> rusqlite::Result<usize> 
+where
+    P: IntoIterator + Copy,
+    P::Item: rusqlite::types::ToSql,
+{
+  use std::{thread, time};
+  
+  let mut retries = retries;
+  loop {
+    if let Ok(con) = crate::db::get_init_db_conn() {
+      match con.execute(
+        sql,
+        params
+      ) {
+        Ok(rows) => {
+          return Ok(rows);
+        },
+        Err(e) => {
+          println!("db e={}", &e);
+          thread::sleep(time::Duration::from_millis(retry_delay_ms));
+          retries -= 1;
+          if retries < 1 {
+            return Err(e);
+          }
+        }
+      }
+    }
+    else {
+      thread::sleep(time::Duration::from_millis(retry_delay_ms));
+      retries -= 1;
+    }
+    if retries < 1 {
+      break;
+    }
+  }
+
+  return Err(
+    rusqlite::Error::InvalidParameterName("db::execute timed out".to_string())
+  );
+
+}
 
