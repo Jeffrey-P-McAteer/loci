@@ -9,6 +9,8 @@ use app_dirs;
 use rusqlite;
 
 use std::path::{PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 pub fn get_database_file() -> PathBuf {
   let mut db_dir = app_dirs::app_dir(
@@ -117,10 +119,10 @@ pub fn trim_db() {
     let r = db_conn.execute_batch(r#"
 
 -- app events expire after ts + invalid_after_ts, or around 8 seconds
-DROP FROM app_events WHERE (ts + invalid_after_ts) < (strftime('%s','now') * 1000.0) LIMIT 100;
+DELETE FROM app_events WHERE (ts + invalid_after_ts) < (strftime('%s','now') * 1000.0);
 
 -- pos reps expire after 1 hour
-DROP FROM pos_reps WHERE (ts + 3600000) < (strftime('%s','now') * 1000.0) LIMIT 100;
+DELETE FROM pos_reps WHERE (ts + 3600000) < (strftime('%s','now') * 1000.0);
 
 
     "#);
@@ -131,11 +133,20 @@ DROP FROM pos_reps WHERE (ts + 3600000) < (strftime('%s','now') * 1000.0) LIMIT 
 }
 
 // Tries to trim db data every 10 seconds.
-pub fn trim_db_t() {
+pub fn trim_db_t(loci_exit_f: Arc<AtomicBool>) {
   use std::{thread, time};
   loop {
-    thread::sleep(time::Duration::from_millis(10000));
+    // sleep for 10 seconds, but check loci_exit_f every 1/2 second
+    for _ in 0..20 {
+      thread::sleep(time::Duration::from_millis(500));
+      let should_exit = loci_exit_f.load(std::sync::atomic::Ordering::SeqCst);
+      if should_exit {
+        break;
+      }
+    }
+    
     trim_db();
+
   }
 }
 

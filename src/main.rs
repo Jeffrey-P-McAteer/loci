@@ -107,6 +107,15 @@ fn main() {
   println!("HWID={}", license::get_host_hwid());
   println!("");
 
+  // Init db schema and begin a thread to trim the db forever
+  let db_loci_exit_f = loci_exit_f.clone();
+  std::thread::spawn(move || {
+    { // init sql schema
+      let _c = db::get_init_db_conn();
+    }
+    db::trim_db_t(db_loci_exit_f);
+  });
+
   // Run background threads in the background
   let bg_loci_exit_f = loci_exit_f.clone();
   std::thread::spawn(move || {
