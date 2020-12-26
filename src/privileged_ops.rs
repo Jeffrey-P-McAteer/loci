@@ -14,6 +14,17 @@ use std::process::Command;
 
 
 pub fn we_are_privileged() -> bool {
+  
+  match std::env::var("LOCI_PPID") {
+    Ok(_ppid) => { } // do nothing, we are a child process as expected
+    Err(_e) => {
+      // force us to think we are not privledged.
+      // This means if a user runs the primary .exe as admin we will still
+      // re-launch and perform admin functions in a new process.
+      return false;
+    }
+  }
+
   #[cfg(target_os = "windows")]
   {
     let out = Command::new("whoami")
@@ -95,6 +106,7 @@ pub fn elevate_privileges(loci_exit_f: Arc<AtomicBool>) {
       .arg(&arglist[..])
       .arg("-verb")
       .arg("runas")
+      .env("LOCI_PPID", format!("{}", std::process::id()).as_str() )
       //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
       .spawn()
       .expect("Could not run admin b/c sub-process failed");
@@ -110,6 +122,7 @@ pub fn elevate_privileges(loci_exit_f: Arc<AtomicBool>) {
             .arg("--")
             .arg(&self_exe.to_string_lossy()[..])
             .args(&args[..])
+            .env("LOCI_PPID", format!("{}", std::process::id()).as_str() )
             //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
             .spawn()
             .expect("Could not run admin b/c sub-process failed");
@@ -122,6 +135,7 @@ pub fn elevate_privileges(loci_exit_f: Arc<AtomicBool>) {
                   .arg("--")
                   .arg(&self_exe.to_string_lossy()[..])
                   .args(&args[..])
+                  .env("LOCI_PPID", format!("{}", std::process::id()).as_str() )
                   //.env(crate::DISABLED_SUBPROGRAMS, env::var(crate::DISABLED_SUBPROGRAMS).unwrap_or(String::new()))
                   .spawn()
                   .expect("Could not run admin b/c sub-process failed");

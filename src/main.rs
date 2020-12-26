@@ -88,7 +88,7 @@ fn main() {
     println!("Skipping privileged_ops::elevate_privileges b/c LOCI_NO_ADMIN set");
   }
   else {
-    // If we are root spawn administrative BG threads.
+    // If we are root and spawn administrative BG threads.
     if privileged_ops::we_are_privileged() {
       subprograms::main_privileged(loci_exit_f.clone());
       std::process::exit(0)
