@@ -17,50 +17,11 @@ import tempfile
 import time
 import traceback
 
-libusb_install_py_pkgs = os.path.join(tempfile.gettempdir(), 'libusb_install_py_pkgs')
-if not os.path.exists(libusb_install_py_pkgs):
-  os.makedirs(libusb_install_py_pkgs)
-sys.path.append(libusb_install_py_pkgs)
-# This is used by pip when you pass --user
-os.environ['PYTHONUSERBASE'] = libusb_install_py_pkgs
+embedded_site_packages = os.path.join(os.path.dirname(sys.executable), 'site-packages')
+sys.path.append(embedded_site_packages)
 
-# python -m pip install --target=DIRECTORY_NAME six comtypes pypiwin32
-# python -m pip install --user pywinauto
-try:
-  from pywinauto.application import Application
-except Exception as e:
-  print(e)
-
-  we_have_pip = False
-  try:
-    import pip
-    we_have_pip = True
-  except Exception as e:
-    print(e)    
-
-  if not we_have_pip:
-    get_pip_script = os.path.join(tempfile.gettempdir(), 'get-pip.py')
-    print('get_pip_script={}'.format(get_pip_script))
-
-    if not os.path.exists(get_pip_script):
-      with urllib.request.urlopen('https://bootstrap.pypa.io/get-pip.py') as url_f:
-        with open(get_pip_script, 'wb') as pip_tmp_f:
-          pip_tmp_f.write( url_f.read() )
-
-    subprocess.run([
-      sys.executable, get_pip_script, '--user'
-    ])
-
-  print('Attempting to auto-install dependencies using -m pip --user...')
-
-  # Small TODO: don't use the user's home directory for these packages;
-  # TBH not crying much over this one.
-  subprocess.run([
-    sys.executable, '-m', 'pip', 'install', '--user', 'pywinauto'
-  ])
-
-
-  from pywinauto.application import Application
+# embedded by build_loci_eapp_dir_win64()
+from pywinauto.application import Application
 
 
 if __name__ == '__main__':

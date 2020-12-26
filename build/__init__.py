@@ -292,6 +292,21 @@ def build_loci_eapp_dir_linux64():
 
   # Python 3 is available on nearly every linux distro,
   # and python.org does not have an embedded zip build.
+
+  # We use the developer's python install (which must include pip)
+  # to bootstrap python libraries we want customers to have access to.
+  # we drop these in the eapp/python/site-packages directory
+  embedded_packages = [
+    
+  ]
+  python_embedded_packages = j(eapp_dir, 'python', 'site-packages')
+  if not os.path.exists(python_embedded_packages):
+    os.makedirs(python_embedded_packages)
+    if len(embedded_packages) > 0:
+      subprocess.run([
+        sys.executable, '-m', 'pip', 'install', '--target={}'.format(python_embedded_packages),
+        *embedded_packages,
+      ])
   
   cond_build_plugin(
     j('plugins', 'usb_gps_reader'),
@@ -339,6 +354,20 @@ def build_loci_eapp_dir_win64():
     'https://www.python.org/ftp/python/3.9.1/python-3.9.1-embed-amd64.zip',
     j(eapp_dir, 'python')
   )
+  # We use the developer's python install (which must include pip)
+  # to bootstrap python libraries we want customers to have access to.
+  # we drop these in the eapp/python/site-packages directory
+  embedded_packages = [
+    'pywinauto',
+  ]
+  python_embedded_packages = j(eapp_dir, 'python', 'site-packages')
+  if not os.path.exists(python_embedded_packages):
+    os.makedirs(python_embedded_packages)
+    if len(embedded_packages) > 0:
+      subprocess.run([
+        sys.executable, '-m', 'pip', 'install', '--target={}'.format(python_embedded_packages),
+        *embedded_packages,
+      ])
 
   cond_build_plugin(
     j('plugins', 'usb_gps_reader'),
