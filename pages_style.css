@@ -1,0 +1,88 @@
+@font-face {
+  font-family: sportscenter;
+  src: url(sportscenter.ttf);
+}
+
+html {
+  background-color: #0d1424;
+  /* TODO replace url w/ generated or committed image asset */
+  background-image: url('splash.jpg');
+  background-repeat: no-repeat;
+  background-size: min(100vw, 1200pt) auto;
+  background-position: center top;
+  background-clip: padding-box;
+
+  padding: 0;
+  padding-top: 0px;
+}
+body {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: min(420pt, 100vw * 0.34);
+  padding: 8pt 24pt;
+  max-width: 740px;
+
+  color: #ffffff;
+  background-color: #0e1527;
+  font-size: 1.2em;
+}
+
+h1, h2, h3, h4 {
+  font-family: sportscenter, sans-serif;
+  text-transform: capitalize;
+}
+div, p, em, ul, ol, li {
+  font-family: sans-serif;
+}
+a {
+  color: #ffffff;
+}
+a:hover {
+  color: #6393dd;
+}
+a:visited {
+  color: #ffffff;
+}
+h1 > a, h2 > a, h3 > a {
+  text-decoration: none;
+}
+
+
+div.screenshots {
+  padding: 4pt;
+}
+div.screenshots img {
+  max-height: 64pt;
+  margin: 4pt;
+}
+
+
+div.download {
+  background-color: #17264d;
+  margin: 4pt 6pt;
+  padding: 2pt 8pt;
+  transition: transform 0.2s;
+}
+div.download:hover {
+  transform: scale(1.02);
+}
+a:nth-child(odd) > div.download {
+  background-color: #204264;
+}
+div.download * {
+  display: inline-block;
+  vertical-align: center;
+}
+div.download img {
+  width: 96px;
+  height: 96px;
+  vertical-align: middle;
+  padding-right: 8pt;
+}
+div.download p {
+  margin-left: 12pt;
+  color: white;
+  font-size: 2em;
+}
+
+

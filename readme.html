@@ -1,0 +1,17 @@
+<head><link rel="stylesheet" href="pages_style.css"></head><h1>Loci Docs</h1>
+<p>The <code>./docs/</code> directory holds writeup about Loci's
+public interface.</p>
+<p>Graphs are generally written in the <a href="https://plantuml.com/">PlantUML language</a>
+and documents are in markdown, but advanced formats like LaTeX
+are find so long as you can compile them into something readable
+in a web browser using <code>build.py</code>.</p>
+<p>A directory of web-documents can be built
+by running:</p>
+<p>```bash
+python -m docs.build</p>
+<h1>To open your web browser to the built directory:</h1>
+<p>python -m docs.build open
+```</p>
+<p>This directory may also be pushed to Github Pages:</p>
+<p><code>bash
+python -m docs.build publish</code></p>
