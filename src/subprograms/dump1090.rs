@@ -139,11 +139,31 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
 
 
             if read_line.starts_with("*") {
-              // TODO Save last line as a record
-              println!("dump1090_record={:?}", dump1090_record);
+              //println!("dump1090_record={:?}", dump1090_record);
+
+              let has_position = dump1090_record.contains_key("lat") && dump1090_record.contains_key("lon") && dump1090_record.get("lat").unwrap_or(&String::new()).len() > 2;
+              if has_position {
+                let lat: f64 = dump1090_record.get("lat").unwrap_or(&"999.9".to_string()).parse().unwrap_or(-999.0);
+                let lon: f64 = dump1090_record.get("lon").unwrap_or(&"999.9".to_string()).parse().unwrap_or(-999.0);
+                let r = crate::db::execute(
+                  1, 0,
+                  "INSERT INTO pos_reps (id, lat, lon, src_tags) VALUES (?1, ?2, ?3, \"usb-radio,ads-b,\")",
+                  rusqlite::params![
+                    dump1090_record.get("id-line").unwrap_or(&"unk".to_string()),
+                    lat,
+                    lon,
+                  ]
+                );
+                if let Err(e) = r {
+                  println!("{}:{} {}", std::file!(), std::line!(), e);
+                }
+              }
+              else {
+                // TODO ack. squawk data such as "Baro altitude:" and "Other Address:"
+              }
+
 
               dump1090_record.clear();
-
               dump1090_record.insert("encoded-packet", read_line.to_string());
 
             }
@@ -154,23 +174,44 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
               dump1090_record.insert("altitude", (&read_line[15..]).to_string());
             }
             else if read_line.starts_with("CPR latitude") {
-              dump1090_record.insert("lat", (&read_line[14..]).to_string());
+              if let Some(idx) = read_line.find('(') {
+                // Parse -77.52111 (115237) as -77.52111
+                dump1090_record.insert("lat", (&read_line[14..idx]).trim().to_string());
+              }
+              else {
+                dump1090_record.insert("lat", (&read_line[14..]).trim().to_string());
+              }
             }
             else if read_line.starts_with("CPR longitude") {
-              dump1090_record.insert("lon", (&read_line[15..]).to_string());
+              if let Some(idx) = read_line.find('(') {
+                // Parse 38.30370 (50325) as 38.30370
+                dump1090_record.insert("lon", (&read_line[15..idx]).trim().to_string());
+              }
+              else {
+                dump1090_record.insert("lon", (&read_line[15..]).trim().to_string());
+              }
             }
             else if read_line.starts_with("CPR type") {
-              dump1090_record.insert("type", (&read_line[9..]).to_string());
+              dump1090_record.insert("type", (&read_line[9..]).to_string()); // eg "Airborne"
+            }
+            else if read_line.starts_with("Air/Ground") {
+              dump1090_record.insert("air-or-ground", (&read_line[12..]).to_string()); // eg "airborne"
             }
             else if read_line.starts_with("RSSI") {
               dump1090_record.insert("rssi", (&read_line[6..]).to_string());
             }
+            else if read_line.starts_with("Groundspeed") {
+              dump1090_record.insert("ground-speed", (&read_line[13..]).to_string());
+            }
             else if read_line.starts_with("DF:") {
               dump1090_record.insert("id-line", (&read_line[..]).to_string());
             }
-            else if read_line.len() > 2 {
-              println!("unused dump1090 line = {}", read_line);
+            else if read_line.starts_with("ICAO Address") {
+              dump1090_record.insert("id-line", (&read_line[14..]).to_string());
             }
+            // else if read_line.len() > 2 {
+            //   println!("unused dump1090 line = {}", read_line);
+            // }
 
 
           }

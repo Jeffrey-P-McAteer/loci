@@ -128,6 +128,10 @@ DELETE FROM pos_reps WHERE (ts + 3600000) < (strftime('%s','now') * 1000.0);
     "#);
     if let Err(e) = r {
       println!("{}:{} e={}", std::file!(), std::line!(), e);
+      // Also make an attempt to init db
+      if let Err(e) = get_init_db_conn() {
+        println!("{}:{} e={}", std::file!(), std::line!(), e);
+      }
     }
   }
 }

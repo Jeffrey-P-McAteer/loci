@@ -4,12 +4,17 @@ function main() {
   $("#menu").menu({position: {at: "left bottom"}});
   $('div.split-pane').splitPane();
 
-  var wwd = new WorldWind.WorldWindow("map0");
+  window.wwd = new WorldWind.WorldWindow("map0");
   
   // "offline" - just points to 3rdparty/worldwind-web/images/BMNG_world.topo.bathy.200405.3.2048x1024.jpg
-  wwd.addLayer(new WorldWind.BMNGOneImageLayer());
+  window.wwd.addLayer(new WorldWind.BMNGOneImageLayer());
   // Online, high-res landsat from NASA
-  //wwd.addLayer(new WorldWind.BMNGLandsatLayer());
+  //window.wwd.addLayer(new WorldWind.BMNGLandsatLayer());
+
+  window.wwd.globe.projection = new WorldWind.ProjectionMercator();
+
+  window.placemarkLayer = new WorldWind.RenderableLayer("Placemarks");
+  window.wwd.addLayer(window.placemarkLayer);
 
   // Online, high-res tutorial layer (just as a demo for now)
   // {
@@ -30,7 +35,7 @@ function main() {
   //       var wmtsLayer = new WorldWind.WmtsLayer(wmtsConfig);
 
   //       // Add the layers to WorldWind and update the layer manager
-  //       wwd.addLayer(wmtsLayer);
+  //       window.wwd.addLayer(wmtsLayer);
   //       //layerManager.synchronizeLayerList();
   //   };
 
@@ -72,7 +77,7 @@ function main() {
         var wmtsLayer = new WorldWind.WmtsLayer(wmtsConfig);
 
         // Add the layers to WorldWind and update the layer manager
-        wwd.addLayer(wmtsLayer);
+        window.wwd.addLayer(wmtsLayer);
         //layerManager.synchronizeLayerList();
     };
 
@@ -84,9 +89,9 @@ function main() {
     $.get(serviceAddress).done(createLayer).fail(logError);
   }
 
-  wwd.addLayer(new WorldWind.CompassLayer());
-  wwd.addLayer(new WorldWind.CoordinatesDisplayLayer(wwd));
-  wwd.addLayer(new WorldWind.ViewControlsLayer(wwd));
+  window.wwd.addLayer(new WorldWind.CompassLayer());
+  window.wwd.addLayer(new WorldWind.CoordinatesDisplayLayer(window.wwd));
+  window.wwd.addLayer(new WorldWind.ViewControlsLayer(window.wwd));
 
   // Setup websocket comms + poll database for devices
   setup_ws();
@@ -133,11 +138,50 @@ function on_ws_msg(msg) {
 
 
 function poll_ws() {
+
   window.ws.send(JSON.stringify({
     'type': 'db-query-constant',
-    'query': 'select * from pos_reps limit 50;',
-    'callback': 'console.log',
+    'query': 'select * from pos_reps ORDER BY ts DESC, id ASC limit 20;',
+    'callback': 'show_posrep',
   }));
+
+
 }
 
+
+function show_posrep(data) {
+  console.log('show_posrep', data);
+  for (var i=0; i<data.length; i++) {
+    console.log('show_posrep['+i+']', data[i]);
+
+    var attrs = new WorldWind.PlacemarkAttributes(null);
+    
+    attrs.imageOffset = new WorldWind.Offset(
+      WorldWind.OFFSET_FRACTION, 0.3,
+      WorldWind.OFFSET_FRACTION, 0.0);
+    attrs.labelAttributes.color = WorldWind.Color.YELLOW;
+    attrs.labelAttributes.offset = new WorldWind.Offset(
+            WorldWind.OFFSET_FRACTION, 0.5,
+            WorldWind.OFFSET_FRACTION, 1.0);
+
+    attrs.imageSource = WorldWind.configuration.baseUrl + "images/pushpins/plain-red.png";
+
+    var p = new WorldWind.Placemark(
+      new WorldWind.Position(data["lat"], data["lon"], 100.0), false, attrs
+    );
+    p.displayName = data["id"];
+    p.label = data["id"];
+    p.altitudeMode = WorldWind.RELATIVE_TO_GROUND;
+    p.alwaysOnTop = true;
+
+    window.placemarkLayer.addRenderable(p);
+
+  }
+
+  // Trim window.placemarkLayer.renderables
+  while (window.placemarkLayer.renderables.length > 20) {
+    window.placemarkLayer.renderables.shift();
+  }
+
+}
 

@@ -104,21 +104,33 @@ pub fn poll(usb_gps_p: &mut Child, usb_gps_stdout: &mut ChildStdout, stdout_buff
             // NMEA packets must end in RN to be parsed
             let read_line = format!("{}\r\n", read_line.trim());
 
-            println!("read_line={}", &read_line[..]);
+            //println!("read_line={}", &read_line[..]);
 
             // TODO detect + use _usb_gps_restart_flag when GPS is detected to be broken
             
             for result in parser.parse_from_bytes(read_line.as_bytes()) {
               match result {
                 Ok(ParseResult::RMC(Some(rmc))) => {
-                  println!("Got RMC packet: {:?}", rmc);
+                  //println!("Got RMC packet: {:?}", rmc);
+                  let r = crate::db::execute(
+                    1, 0,
+                    "INSERT INTO pos_reps (id, lat, lon, src_tags) VALUES (?1, ?2, ?3, \"usb-gps,self-posrep,\")",
+                    rusqlite::params![
+                      "SELF",
+                      rmc.latitude.as_f64(),
+                      rmc.longitude.as_f64(),
+                    ]
+                  );
+                  if let Err(e) = r {
+                    println!("{}:{} {}", std::file!(), std::line!(), e);
+                  }
                 },
                 
                 Ok(_p) => {
                   //println!("Got other packet: {:?}", p);
                 }
-                Err(e) => {
-                  println!("nmea parse e={}", e);
+                Err(_e) => {
+                  //println!("nmea parse e={}", e);
                 }
               }
             }
