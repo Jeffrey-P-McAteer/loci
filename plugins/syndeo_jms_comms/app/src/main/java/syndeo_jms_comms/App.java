@@ -168,7 +168,7 @@ public class App {
     private static class SyndeoListener implements MessageListener {
         public void onMessage(javax.jms.Message message_iface) {
             unsafe(() -> {
-              // TODO parse and forward to other plugins
+              // TODO hp parse and forward to other plugins
               // See https://docs.oracle.com/javaee/7/api/javax/jms/Message.html
               if (message_iface instanceof ActiveMQTextMessage) {
                   ActiveMQTextMessage message = (ActiveMQTextMessage) message_iface;

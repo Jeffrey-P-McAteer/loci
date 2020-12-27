@@ -358,8 +358,7 @@ def build_loci_eapp_dir_win64():
   # to bootstrap python libraries we want customers to have access to.
   # we drop these in the eapp/python/site-packages directory
   embedded_packages = [
-    'pywinauto', 'comtypes', 'six', 'pywin32',
-    
+    'pywinauto',
   ]
   python_embedded_packages = j(eapp_dir, 'python', 'site-packages')
   if not os.path.exists(python_embedded_packages):

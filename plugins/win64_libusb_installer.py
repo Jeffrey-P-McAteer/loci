@@ -20,8 +20,15 @@ import traceback
 embedded_site_packages = os.path.join(os.path.dirname(sys.executable), 'site-packages')
 sys.path.append(embedded_site_packages)
 
-# embedded by build_loci_eapp_dir_win64()
-from pywinauto.application import Application
+full_auto_possible = False
+
+
+try:
+  # embedded by build_loci_eapp_dir_win64()
+  from pywinauto.application import Application
+  full_auto_possible = True
+except Exception as e:
+  traceback.print_exc()
 
 
 if __name__ == '__main__':
@@ -39,6 +46,13 @@ if __name__ == '__main__':
       with open(zadig_tmp_exe, 'wb') as zadig_tmp_f:
         zadig_tmp_f.write( url_f.read() )
 
+  if not full_auto_possible:
+    # Best we can do is open zadig_tmp_exe and hope the user can press
+    # the same buttons we do.
+    # TODO figure out how to ensure "pip install pywinauto" is portable.
+    p = subprocess.run([zadig_tmp_exe])
+    sys.exit(p.returncode)
+
   # Now we use pywinauto to automate execution
   app = Application().start(zadig_tmp_exe)
 
@@ -51,8 +65,7 @@ if __name__ == '__main__':
     # Debugging
     winspec.dump_tree()
 
-
-    # TODO rotate through all items from USB dropdown
+    # rotate through all items from USB dropdown
     # By default this is filtered so we only see things that look like RTL-SDRs
     for i in range(0, winspec['ComboBox'].item_count()):
       print('Installing driver for device {}'.format(i))
@@ -77,6 +90,8 @@ if __name__ == '__main__':
       popup_win = app.top_window()
       popup_win.wait('visible')
       popup_win.dump_tree()
+
+      # TODO wait for "close" button and click it. Currently we need the user to do this.
 
       popup_win.wait_not('visible', timeout=120)
       print("Popup closed!")

@@ -5,7 +5,6 @@
 
 html {
   background-color: #0d1424;
-  /* TODO replace url w/ generated or committed image asset */
   background-image: url('splash.jpg');
   background-repeat: no-repeat;
   background-size: min(100vw, 1200pt) auto;
