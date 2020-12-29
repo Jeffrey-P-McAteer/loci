@@ -447,6 +447,33 @@ pub fn main_privileged(loci_exit_f: Arc<AtomicBool>) {
           }
         }
 
+        // If we have > 100 child_pids kill the bottom 50 under the assumption
+        // these processes are no longer important.
+        // This may kill radio processes, but our design should handle that well
+        // and we will loop around and reconnect in <1s
+        if let Ok(child_pids) = db_poll_child_pids.read() {
+          let child_pids: Vec<&u32> = child_pids.iter().collect();
+          if child_pids.len() > 100 {
+            for pid in &child_pids[0..50] {
+              if cfg!(target_os = "windows") {
+                Command::new("taskkill.exe")
+                  .arg("/pid")
+                  .arg(format!("{}", pid))
+                  .arg("/F")
+                  .status()
+                  .expect("could not start taskkill.exe");
+              }
+              else {
+                Command::new("kill")
+                  .arg(format!("{}", pid))
+                  .status()
+                  .expect("could not start taskkill.exe");
+              }
+            }
+          }
+        }
+
+
         if should_exit {
           db_poll_loci_exit_f.store(true, std::sync::atomic::Ordering::SeqCst);
 

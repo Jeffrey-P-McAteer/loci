@@ -10,7 +10,7 @@ use std::process::{Command, Child, Stdio, ChildStdout};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::sync::atomic::AtomicBool;
-
+use std::{thread,time};
 
 pub fn start_and_poll_until_exit(eapp_dir: &Path, loci_exit_f: &Arc<AtomicBool>, child_pids: &Arc<RwLock<Vec<u32>>>) {
   let mut dump1090_p = start(eapp_dir);
@@ -135,6 +135,11 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
             }
 
             if read_line.contains("no supported devices") || read_line.contains("error querying device") {
+              // When we get this we get a huge list and end up restarting often.
+              // To prevent a huge churn we stick a 10-second delay in here, and
+              // this means customers should expect to have to wait at least 10 seconds
+              // for new radios to be discovered.
+              thread::sleep(time::Duration::from_millis(10100));
               *dump1090_restart_flag = true;
             }
 
