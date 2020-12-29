@@ -127,6 +127,7 @@ pub fn poll(dump1090_p: &mut Child, dump1090_stdout: &mut ChildStdout, stdout_bu
                   print!("executing {}", &python_script[..]);
                   Command::new("python")
                     .args(&[&python_script[..]])
+                    .env("ZADIG_EXE_PATH", &format!("{}{}zadig.exe", eapp_dir, std::path::MAIN_SEPARATOR))
                     .status()
                     .expect("Could not run win64_libusb_installer.py");
                 }
