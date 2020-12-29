@@ -19,6 +19,62 @@ CREATE TABLE IF NOT EXISTS app_events (
   data BLOB
 );
 
+
+-- The app_major_ui table describes 4 major functional areas of the Loci UI:
+--  * Top menu bar (as a tree w/ ordering)
+--  * Left tabs (as an ordered list)
+--  * Right tabs (as an ordered list)
+--  * Action buttons (as an ordered list)
+--
+-- Plugins use this table to extend the Loci UI.
+--
+CREATE TABLE IF NOT EXISTS app_major_ui (
+  -- The "type" must be one of 'top', 'left', 'right', or 'action',
+  -- which defined where this UI component goes and how it behaves.
+  type TEXT CHECK( type IN ('top', 'left', 'right', 'action') ) NOT NULL DEFAULT 'right',
+  
+  -- For 'top', this is the menu item name.
+  -- For 'left' and 'right', this is the tab title name.
+  -- For 'action', this is the button text or the text directly below the icon if an icon is defined.
+  -- This should be a translation key, aka lowercase with no space chars.
+  display_name_tkey TEXT
+    CHECK(
+        lower(display_name_tkey) == display_name_tkey AND
+        trim(replace(replace(display_name_tkey, '\t', ''), ' ', '')) == display_name_tkey
+    )
+    NOT NULL,
+
+  -- If type == left/right and this is set, the tab will load an <iframe src="tab_content_url">
+  tab_content_url TEXT,
+
+  -- If type == left/right and a program wants to switch to ie "map" or "chat",
+  -- tab_focus_switch_tags will be checked and the first tab matching that will be used to
+  -- change focus. Tags ought to be comma-separated, like "map,map5,a-map-of-egypt".
+  -- Tags are not subject to translation rules, they are only used for code to automate focus switching.
+  tab_focus_switch_tags TEXT NOT NULL DEFAULT '',
+
+  -- If type == top, this is a case-and-whitespace-insensitive "/"-seperated list of translation-key menu parents
+  -- which this item is placed under. Eg: "file/submenu-a/" would result in "file" being translated,
+  -- "submenu-a" being translated, and then under those 2 menus an entry "display_name_tkey" being translated and displayed.
+  top_menu_path TEXT 
+    CHECK(
+        lower(top_menu_path) == top_menu_path AND
+        trim(replace(replace(top_menu_path, '\t', ''), ' ', '')) == top_menu_path
+    ),
+
+  -- if type == top/action and this is set, upon being clicked this will be
+  -- evaluated as javascript using window.eval(button_action).
+  button_action TEXT,
+  -- if type == action and this is set, this graphic will be placed in an
+  -- <img src="button_icon_url"> element with the width constrained and the height set to auto.
+  button_icon_url TEXT,
+
+  -- integer between 0 and 1000 inclusive, where 0 sorts to the beginning/left-most UI
+  -- area and 1000 sorts to the bottom.
+  ui_order INTEGER CHECK( ui_order >= 0 AND ui_order <= 1000 ) NOT NULL default 500
+
+);
+
 -- pos_reps holds a rolling list of position reports.
 -- 
 CREATE TABLE IF NOT EXISTS pos_reps (
