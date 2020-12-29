@@ -93,9 +93,9 @@ CREATE TABLE IF NOT EXISTS app_extra_tkey (
   lang_code TEXT CHECK( length(lang_code) == 2 ) NOT NULL,
 
   -- The translation may contain any utf-8 text.
-  translation TEXT NOT NULL,
+  translation TEXT NOT NULL
 
-};
+);
 
 -- pos_reps holds a rolling list of position reports.
 -- 
