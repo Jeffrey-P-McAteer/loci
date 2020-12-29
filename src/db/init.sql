@@ -75,6 +75,28 @@ CREATE TABLE IF NOT EXISTS app_major_ui (
 
 );
 
+
+-- The app_extra_tkey table contains translation keys which are used
+-- if the embedded and user-supplied JSON files do not contain a match.
+-- This is useful for shipping simple plugins with few tkeys which are
+-- not part of the standard Loci set of tkeys.
+CREATE TABLE IF NOT EXISTS app_extra_tkey (
+  -- lowercase, non-whitespace key which plugin UI code asks for
+  tkey TEXT
+    CHECK(
+        lower(tkey) == tkey AND
+        trim(replace(replace(tkey, '\t', ''), ' ', '')) == tkey
+    )
+    NOT NULL,
+
+  -- 2-digit language code, per ISO 639-1
+  lang_code TEXT CHECK( length(lang_code) == 2 ) NOT NULL,
+
+  -- The translation may contain any utf-8 text.
+  translation TEXT NOT NULL,
+
+};
+
 -- pos_reps holds a rolling list of position reports.
 -- 
 CREATE TABLE IF NOT EXISTS pos_reps (
@@ -101,18 +123,3 @@ CREATE TABLE IF NOT EXISTS pos_reps (
 );
 
 COMMIT;
-
--- map_points holds every item which has a name and at least one position report.
--- additional data may be stored as JSON, either using a language-specific JSON parser or by
--- taking advantage of the JSON1 sqlite extension (https://www.sqlite.org/json1.html)
--- 
---   CREATE TABLE IF NOT EXISTS map_points (
---     display_name TEXT NOT NULL,
---     display_short_name TEXT NOT NULL,
---   
---     FOREIGN KEY(pos_rep) REFERENCES pos_reps(uniq_row_id)
---   
---   );
-
-
--- COMMIT;
