@@ -33,14 +33,12 @@ actix-cors = "0.5.3"
 
 mime_guess = "2.0"
 
-rust-embed="5.6.0"
+rust-embed = "5.6.0"
 
 rusqlite = { version = "0.24", features = ["bundled"] }
 
 tar = "0.4"
 flate2 = "1.0"
-
-app_dirs = { package = "app_dirs2", version = "2" }
 
 shlex = "0.1"
 
@@ -55,6 +53,8 @@ regex = "1"
 nmea0183 = "0.2.3"
 
 chrono = "0.4.19"
+
+dirs = "3.0"
 
 
 [target.x86_64-unknown-linux-gnu.dependencies]

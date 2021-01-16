@@ -6,8 +6,4 @@
  *************************************************************************************/
 
 #[allow(dead_code)] // ill get to this
-pub fn get_translation_json() {
-
-}
-
-
+pub fn get_translation_json() {}
