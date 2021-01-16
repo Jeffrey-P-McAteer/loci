@@ -6,7 +6,6 @@
  *************************************************************************************/
 
 use crossbeam;
-use web_view;
 
 use std::env;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -104,14 +103,14 @@ fn main() {
 
     // Run background threads in the background
     let bg_loci_exit_f = loci_exit_f.clone();
-    //std::thread::spawn(move || {
-    bg_main(bg_loci_exit_f);
-    //});
+    std::thread::spawn(move || {
+        bg_main(bg_loci_exit_f);
+    });
 
     // Run graphics on main thread (windows cares quite a bit about this)
-    // if let Err(e) = gui_main() {
-    //   println!("gui error = {:?}", e);
-    // }
+    if let Err(e) = gui_main(loci_exit_f.clone()) {
+      println!("gui error = {:?}", e);
+    }
 
     // When gui exits tell children to exit
     loci_exit_f.store(true, Ordering::SeqCst);
@@ -263,15 +262,20 @@ fn setup_signal_handlers(loci_exit_f: Arc<AtomicBool>) {
     }
 }
 
-// #[macro_export]
-// macro_rules! dprint {
-//     ( $( $x:expr ),* ) => {
-//         {
-//             let mut temp_vec = Vec::new();
-//             $(
-//                 temp_vec.push($x);
-//             )*
-//             temp_vec
-//         }
-//     };
-// }
+fn gui_main(loci_exit_f: Arc<AtomicBool>) -> Result<(), systray::Error> {
+    let mut a = systray::Application::new()?;
+
+    a.add_menu_item("Loci is Running", |window| {
+        Ok::<_, systray::Error>(())
+    })?;
+
+    a.add_menu_item("Quit", move |window| {
+        loci_exit_f.store(true, Ordering::SeqCst);
+        window.quit();
+        Ok::<_, systray::Error>(())
+    })?;
+
+    a.wait_for_message()?;
+
+    Ok(())
+}
