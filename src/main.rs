@@ -263,6 +263,14 @@ fn setup_signal_handlers(loci_exit_f: Arc<AtomicBool>) {
 }
 
 fn gui_main(loci_exit_f: Arc<AtomicBool>) -> Result<(), systray::Error> {
+    
+    if let Ok(_var) = std::env::var("LOCI_NO_GUI") {
+        loop {
+            thread::sleep(time::Duration::from_millis(5000));
+        }
+        return Ok(());
+    }
+
     let mut a = systray::Application::new()?;
 
     a.add_menu_item("Loci is Running", |window| {
