@@ -317,6 +317,15 @@ def build_loci_eapp_dir_linux64():
     j(eapp_dir, 'usb_gps_reader')
   )
 
+  cond_build_plugin(
+    j('plugins', 'loci-ws'),
+    [
+      ['cargo', 'build', '--release', '--target=x86_64-unknown-linux-gnu']
+    ],
+    j('plugins', 'loci-ws', 'target', 'x86_64-unknown-linux-gnu', 'release', 'loci-ws'),
+    j(eapp_dir, 'loci-ws')
+  )
+
 
   return eapp_dir
 
@@ -376,6 +385,15 @@ def build_loci_eapp_dir_win64():
     ],
     j('plugins', 'usb_gps_reader', 'target', 'x86_64-pc-windows-gnu', 'release', 'usb_gps_reader.exe'),
     j(eapp_dir, 'usb_gps_reader.exe')
+  )
+
+  cond_build_plugin(
+    j('plugins', 'loci-ws'),
+    [
+      ['cargo', 'build', '--release', '--target=x86_64-pc-windows-gnu']
+    ],
+    j('plugins', 'loci-ws', 'target', 'x86_64-pc-windows-gnu', 'release', 'loci-ws.exe'),
+    j(eapp_dir, 'loci-ws.exe')
   )
 
 

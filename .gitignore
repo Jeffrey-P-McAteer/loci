@@ -6,7 +6,7 @@ __pycache__/
 __pycache__
 # These assets are downloaded by "build.py"
 # and should not be checked in to source control
-/src/webserver/www/3rdparty
+3rdparty/
 
 .gradle
 gradle/

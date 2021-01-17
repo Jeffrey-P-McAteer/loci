@@ -16,6 +16,16 @@ fn main() {
 }
 
 fn embed_eapp_tar(eapp_tar_path: &str) {
+
+    if cfg!(feature = "embed-eapp-tar") && eapp_tar_path.len() < 1 {
+        panic!("Feature embed-eapp-tar requested but no environment variable set: LOCI_EAPP_TAR");
+    }
+
+    // Nothing to embed, don't bother linking anything.
+    if eapp_tar_path.len() < 1 {
+        return;
+    }
+
     let out_dir = std::env::var("OUT_DIR")
         .expect("OUT_DIR is defined to always exist when cargo executes build.rs");
 
@@ -60,10 +70,6 @@ fn embed_eapp_tar(eapp_tar_path: &str) {
     }
 
     drop(compiling_for_win); // silence compiler warning, we may want to query compiling_for_win itf
-
-    if cfg!(feature = "embed-eapp-tar") && eapp_tar_path.len() < 1 {
-        panic!("Feature embed-eapp-tar requested but no environment variable set: LOCI_EAPP_TAR");
-    }
 
     let eapp_tar_data_c_f = format!("{}/eapp_tar_data.c", out_dir);
     let mut eapp_tar_data_contents = String::new();

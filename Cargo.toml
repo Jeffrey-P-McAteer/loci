@@ -5,6 +5,16 @@ authors = ["Jeffrey McAteer <jeffrey.mcateer@devil-tech.com>"]
 edition = "2018"
 build = "build.rs"
 
+
+[lib]
+name = "loci"
+path = "src/lib.rs"
+
+[[bin]]
+name = "loci"
+path = "src/main.rs"
+
+
 [features]
 default = [ "embed-eapp-tar" ]
 
@@ -16,6 +26,10 @@ default = [ "embed-eapp-tar" ]
 # The subprograms/mod.rs code has conditional compile-time logic to
 # handle both embedding and searching CWD for the tarball.
 embed-eapp-tar = []
+
+# This turns on code generation for external lib.rs stuff.
+# TODO make the interface better so this is not necessary.
+compile-lib-only = []
 
 
 [dependencies]

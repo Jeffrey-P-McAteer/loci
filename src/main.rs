@@ -11,13 +11,11 @@ use std::env;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::{thread, time};
-use std::path::PathBuf;
 
 pub const LOCI_DB_ENV_KEY: &'static str = "LOCI_DB_FILE";
 pub const LOCI_EAPP_DIR_ENV_KEY: &'static str = "LOCI_EAPP_DIR";
 
 pub const DISABLED_SUBPROGRAMS: &'static str = "LOCI_DISABLED_SUBPROGRAMS";
-pub const NO_GUI: &'static str = "LOCI_NO_GUI";
 pub const LICENSE_TXT: &'static str = "LOCI_LICENSE_TXT";
 
 // Responsible for extracting and executing
@@ -40,6 +38,10 @@ mod trans;
 // This module is responsible for determining if this
 // copy of locorum is running with a license.
 mod license;
+
+mod lib;
+
+use lib::get_app_dir;
 
 fn main() {
     let loci_exit_f: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -124,48 +126,6 @@ fn main() {
     std::process::exit(0);
 }
 
-#[cfg(target_os = "windows")]
-pub fn get_app_dir(dirname: &str) -> PathBuf {
-    let pb = dirs::data_dir().unwrap_or(PathBuf::from("."))
-        .join(".loci")
-        .join(dirname);
-
-    if !pb.as_path().exists() {
-        if let Err(e) = std::fs::create_dir_all(&pb) {
-            println!("{}:{}: {}", std::file!(), std::line!(), e);
-        }
-    }
-
-    pb
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_app_dir(dirname: &str) -> PathBuf {
-    let pb = dirs::data_dir().unwrap_or(PathBuf::from("."))
-        .join(".loci")
-        .join(dirname);
-
-    if !pb.as_path().exists() {
-        if let Err(e) = std::fs::create_dir_all(&pb) {
-            println!("{}:{}: {}", std::file!(), std::line!(), e);
-        }
-    }
-
-    pb
-}
-
-fn on_proc_exit() {
-    // Write to the DB that Loci should exit (all other apps may query this w/ timestamp)
-    let r = crate::db::execute(
-        20,
-        100, // up to 2 seconds of retries
-        "INSERT INTO app_events (name) VALUES (?1)",
-        rusqlite::params!["loci-shutting-down"],
-    );
-    if let Err(e) = r {
-        println!("error writing loci-shutting-down: {}", e);
-    }
-}
 
 fn add_eapp_bin_dirs_to_path() {
     let eapp_dir = get_app_dir("eapp");
@@ -287,3 +247,21 @@ fn gui_main(loci_exit_f: Arc<AtomicBool>) -> Result<(), systray::Error> {
 
     Ok(())
 }
+
+
+
+pub fn on_proc_exit() {
+    // Write to the DB that Loci should exit (all other apps may query this w/ timestamp)
+    let r = crate::db::execute(
+        20,
+        100, // up to 2 seconds of retries
+        "INSERT INTO app_events (name) VALUES (?1)",
+        rusqlite::params!["loci-shutting-down"],
+    );
+    if let Err(e) = r {
+        println!("error writing loci-shutting-down: {}", e);
+    }
+}
+
+
+

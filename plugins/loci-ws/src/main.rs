@@ -5,6 +5,8 @@
  * Written by Jeffrey McAteer <jeffrey.mcateer@devil-tech.com>, Feb 2019 - Jan 2021
  *************************************************************************************/
 
+use loci;
+
 use actix::{Actor, StreamHandler};
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
@@ -15,8 +17,11 @@ use rust_embed::RustEmbed;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc};
 
+const HTTP_PORT: u64 = 8080;
+const APP_NAME: &'static str = "loci";
+
 #[derive(RustEmbed)]
-#[folder = "src/webserver/www"]
+#[folder = "src/www"]
 struct WWWAssets;
 
 /// Define HTTP actor
@@ -62,7 +67,7 @@ fn handle_ws_txt(text: String, _ws: &mut MyWs, ctx: &mut ws::WebsocketContext<My
           // and as such are not suited for high-volume queries.
           let mut resp = serde_json::json!([]);
 
-          match crate::db::get_init_db_conn() {
+          match loci::db::get_init_db_conn() {
             Ok(conn) => {
               match conn.prepare(&query_s[..]) {
                 Ok(mut stmt) => {
@@ -176,7 +181,7 @@ async fn index(req: HttpRequest, _stream: web::Payload) -> HttpResponse {
   }
 }
 
-pub fn main(_loci_exit_f: Arc<AtomicBool>) {
+fn main() {
 
   let sys = actix_rt::System::new(crate::APP_NAME);
   
