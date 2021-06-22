@@ -1,0 +1,27 @@
+[package]
+name = "app-kernel"
+version = "0.1.0"
+authors = ["Jeffrey McAteer <jeffrey.p.mcateer@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+dirs = "3.0"
+include_dir = "0.6"
+
+app-lib = { path = "../app-lib/" }
+
+# Used to copy runtime data from install dir to app_root (data dir)
+fs_extra = "1.2"
+retain_mut = "0.1"
+
+# Used by run_* modules
+shlex = "0.1"
+regex = "1"
+
+
+[target.x86_64-pc-windows-gnu.dependencies]
+winapi = {version = "0.3", features = ["wincon", "winuser"]}
+
+[build-dependencies]
+winres = "0.1"
+

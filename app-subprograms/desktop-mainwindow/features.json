@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Open native window w/ webview pointed at http:/127.0.0.1:7010/",
+    "priority": 0,
+    "completed": "2021-05-30",
+    "comments": "Implemented in Program.cs:Main",
+  },
+  {
+    "name": "Poll DB table and change native window titlebar color using DB record value",
+    "priority": 10,
+  },
+]

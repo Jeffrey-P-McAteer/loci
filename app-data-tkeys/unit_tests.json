@@ -1,0 +1,12 @@
+{
+  "hello_world": {
+    "en": "Hello World!",
+    "es": "\u00a1Hola Mundo!",
+    "fr": "Bonjour le monde!"
+  },
+  "welcome_user": {
+    "en": "Welcome, User",
+    "es": "Bienvenido usuario",
+    "fr": "Bienvenue, utilisateur"
+  }
+}

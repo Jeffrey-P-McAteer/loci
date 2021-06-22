@@ -1,0 +1,31 @@
+[
+  {
+    "name": "Execute server-webgui subprogram",
+    "priority": 0,
+    "completed": "2021-06-01",
+  },
+  {
+    "name": "Perform license check + die after 10 minutes if invalid",
+    "priority": 10,
+    "began": "2021-06-03",
+    "comment": "Implemented in src/main.rs:invalid_license_kill_t",
+  },
+  {
+    "name": "Add all 'bin' directories to PATH before spawning subprograms",
+    "priority": 20,
+    "completed": "2021-06-10",
+  },
+  {
+    "name": "Spawn geoserver",
+    "priority": 40,
+    "completed": "2021-06-10",
+  },
+  {
+    "name": "Spawn some UDP packet listeners",
+    "priority": 45,
+  },
+  {
+    "name": "Spawn some multicast loci-detecing program to write LAN IPs and hostnames to a DB table",
+    "priority": 50,
+  },
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Listen to 0.0.0.0:7010 and serve html-based UI to clients",
+    "priority": 0,
+    "began": "2021-05-30",
+    "comments": "UI is incomplete, it needs to be extensible via DB records. Plugins will create these records to open tabs + menu items + action buttons.",
+  },
+  {
+    "name": "Begin websocket API",
+    "priority": 10,
+  },
+  {
+    "name": "Begin REST API",
+    "priority": 20,
+  },
+]

@@ -1,0 +1,2 @@
+import docs
+docs.main()

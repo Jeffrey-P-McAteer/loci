@@ -1,0 +1,39 @@
+[
+  /**
+   * `app-lib` does very little that end users care about, but is critical to
+   * prevent complexity from overtaking feature development.
+   */
+  {
+    "name": "Provide app root directory location to Rust lib users",
+    "priority": 0,
+    "completed": "2021-06-05",
+    "comments": "Implemented in src/lib.rs:get_app_root",
+  },
+  {
+    "name": "Provide app root directory location to C lib users",
+    "priority": 10,
+    "completed": "2021-06-05",
+    "comments": "Implemented in src/capi.rs:loci_get_app_root",
+  },
+  {
+    "name": "Provide name-based access to SQLite lib to Rust lib users",
+    "priority": 20,
+    "completed": "2021-06-06",
+    "comments": "Implemented in src/lib.rs:open_app_db"
+  },
+  {
+    "name": "Provide name-based access to SQLite lib to C lib users",
+    "priority": 30,
+    "began": "2021-06-09",
+  },
+  {
+    "name": "Provide name-based access to shared memory from the OS to Rust lib users",
+    "priority": 40,
+    "completed": "2021-06-06",
+    "comments": "Implemented in src/lib.rs:open_shmem_file"
+  },
+  {
+    "name": "Provide name-based access to shared memory from the OS to C lib users",
+    "priority": 50,
+  },
+]

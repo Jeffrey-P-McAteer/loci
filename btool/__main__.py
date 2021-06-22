@@ -1,0 +1,2 @@
+import btool
+btool.main()

@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Frontend to app-lib get_app_root",
+    "priority": 0,
+    "completed": "2021-06-08",
+    "comment": "Implemented as 'info' command along with other metadata API calls",
+  },
+  {
+    "name": "Frontend to app-lib open_app_db (run arbitrary SQL against DB by name)",
+    "priority": 10,
+    "completed": "2021-06-08",
+  },
+  {
+    "name": "Frontend to app-lib open_shmem_file (read/write/poll shared memory block)",
+    "priority": 20,
+    "completed": "2021-06-08",
+  },
+]
