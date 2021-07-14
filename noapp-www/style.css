@@ -1,0 +1,93 @@
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+#app_menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  height: 29pt;
+}
+
+#app_notifications {
+  position: absolute;
+  top: 0;
+  right: 10pt;
+  width: 280pt;
+  height: 100vh;
+
+  display: none;
+}
+
+#center {
+  position: absolute;
+  top: 29pt;
+  left: 0;
+  right: 56pt;
+  bottom: 0;
+
+  display: flex;
+  flex-direction: row;
+}
+
+#app_action_buttons {
+  position: absolute;
+  top: 24pt;
+  right: 0;
+  bottom: 0;
+  width: 56pt;
+}
+
+/* app menu mechanics */
+#app_menu {
+
+}
+
+/* left tabs mechanics */
+#app_right_tabs, #app_left_tabs {
+  padding-top: 8pt;
+}
+#app_right_tabs a, #app_left_tabs a {
+  margin: 2pt 4pt;
+  padding: 0pt 4pt;
+  background: #ffffff;
+}
+#app_right_tabs a.focused, #app_left_tabs a.focused {
+  background: #d0d0d0;
+}
+#app_left_tabs a, #app_left_tabs a:hover, #app_left_tabs a:focus, #app_left_tabs a:active,
+#app_right_tabs a, #app_right_tabs a:hover, #app_right_tabs a:focus, #app_right_tabs a:active {
+  text-decoration: none;
+  color: inherit;
+}
+#app_active_left_tab, #app_active_right_tab {
+  width: 100%;
+  height: calc(100% - (8pt + 4pt + 1em) );
+  background: #d0d0d0;
+  border: 0px;
+}
+
+
+
+
+/* debugging */
+#app_menu {
+  background-color: grey;
+}
+div#center {
+  background-color: green;
+}
+#area_left {
+  background-color:#e41c2c; /*height:100pt;*/
+}
+#area_right {
+  background-color:blue; /*height:100pt;*/
+}
+#app_action_buttons {
+  background-color: orange;
+}
+

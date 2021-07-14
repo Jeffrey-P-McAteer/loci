@@ -1,0 +1,22 @@
+{
+  "short_name": "Loci",
+  "name": "Loci",
+  "icons": [
+    {
+      "src": "/gen/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/gen/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#e41c2c",
+  "display": "standalone",
+  "scope": ".",
+  "theme_color": "#e41c2c",
+  "description": "Loci CoP Client"
+}
