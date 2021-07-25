@@ -26,6 +26,7 @@ import socket
 import ftplib
 import webbrowser
 import re
+import threading
 
 # This holds _all_ known 3rd-party python libs we depend on
 # in btool, tests, and docs.
@@ -121,6 +122,56 @@ def get_build_sizes(repo_root, misc_measures):
   )
   return win_64_size, linux_x86_64_size, linux_aarch64_size, android_size
 
+def get_dir_sloc(directory_or_file):
+  if isinstance(directory_or_file, list):
+    return sum([get_dir_sloc(item) for item in directory_or_file])
+
+  if os.path.isfile(directory_or_file):
+    with open(directory_or_file, 'r') as fd:
+      contents = fd.read()
+      loc_lines = [s for s in contents.splitlines() if len(s.strip()) > 2 ]
+      return len(loc_lines)
+
+  else:
+    total_sloc = 0
+    exclude = [
+      'build', 'out', 'target', '.cargo', '__pycache__', 'bin', 'obj', 'lib', 'gen',
+      'Cargo.lock',
+    ]
+    exclude_extensions = [
+      '.jpg', '.png', 
+    ]
+    for subdir, dirs, files in os.walk(directory_or_file, topdown=True):
+      # https://stackoverflow.com/questions/19859840/excluding-directories-in-os-walk
+      dirs[:] = [d for d in dirs if d not in exclude]
+      
+      for f in files:
+        if not (f in exclude) and not any([f.lower().endswith(x) for x in exclude_extensions]):
+          try:
+            total_sloc += get_dir_sloc(os.path.join(subdir, f))
+          except:
+            traceback.print_exc()
+            print('Error reading lines from {}'.format(os.path.join(subdir, f)))
+          
+    return total_sloc
+
+# Returns total, build_code, config_code, app_code
+def get_sloc(repo_root, misc_measures):
+  build_code = 0
+  config_code = 0
+  app_code = 0
+
+  build_code += get_dir_sloc([j(repo_root, 'btool'), j(repo_root, 'docs'), j(repo_root, 'tests')])
+  config_code += get_dir_sloc([j(repo_root, 'app-db-schemas'), j(repo_root, 'app-data-tkeys')])
+  app_code += get_dir_sloc([
+    j(repo_root, 'app-kernel'), j(repo_root, 'app-kernel-android'), j(repo_root, 'app-lib'),
+    j(repo_root, 'app-subprograms', 'desktop-cli'),
+    j(repo_root, 'app-subprograms', 'desktop-mainwindow'),
+    j(repo_root, 'app-subprograms', 'server-webgui'),
+  ])
+
+  total = build_code + config_code + app_code
+  return total, build_code, config_code, app_code
 
 def update_kpi_data(repo_root, misc_measures):
   delta_build_duration_s = misc_measures['delta_build_duration_s']
@@ -182,6 +233,21 @@ def update_kpi_data(repo_root, misc_measures):
     'total': total,
     'in_progress': in_progress,
     'not_yet_started': not_yet_started,
+  })
+
+
+  if not 'sloc' in build_data:
+    build_data['sloc'] = []
+
+  trim_list(build_data['sloc'], 20)
+  
+  total, build_code, config_code, app_code = get_sloc(repo_root, misc_measures)
+  build_data['sloc'].append({
+    'utc_epoch_seconds': publish_utc_epoch_seconds,
+    'total': total,
+    'build_code': build_code,
+    'config_code': config_code,
+    'app_code': app_code,
   })
 
   save_json('kbi_build_data.json', build_data)
@@ -279,6 +345,27 @@ def gen_kpi_graphs(repo_root):
   fig.autofmt_xdate()
   fig.legend()
   fig.savefig('features.png')
+
+
+  sloc_x = [datetime.datetime.fromtimestamp(x['utc_epoch_seconds']) for x in build_data['sloc']]
+  sloc_y_total = [x.get('total', 0) for x in build_data['sloc']]
+  sloc_y_build_code = [x.get('build_code', 0) for x in build_data['sloc']]
+  sloc_y_config_code = [x.get('config_code', 0) for x in build_data['sloc']]
+  sloc_y_app_code = [x.get('app_code', 0) for x in build_data['sloc']]
+
+  fig, ax = matplotlib.pyplot.subplots(sharey=True)
+  ax.plot_date(sloc_x, sloc_y_total, linestyle='solid', label='Total', color='#FA3820')
+  ax.plot_date(sloc_x, sloc_y_build_code, linestyle='solid', label='Build System', color='#1474FA')
+  ax.plot_date(sloc_x, sloc_y_config_code, linestyle='solid', label='Configuration', color='#22FA23')
+  ax.plot_date(sloc_x, sloc_y_app_code, linestyle='solid', label='Application', color='#FAB01C')
+  ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
+  ax.autoscale_view()
+  ax.set_title('SLOC')
+  ax.set_ylabel('Lines of Code')
+  ax.grid(True)
+  fig.autofmt_xdate()
+  fig.legend()
+  fig.savefig('sloc.png')
 
 
 # Returns the parent dir for all uploaded files
@@ -498,6 +585,7 @@ img.kpi-chart:hover {
     <a href="build_sizes.png"><img class="kpi-chart" src="build_sizes.png"></a>
     <a href="unit_tests.png"><img class="kpi-chart" src="unit_tests.png"></a>
     <a href="features.png"><img class="kpi-chart" src="features.png"></a>
+    <a href="sloc.png"><img class="kpi-chart" src="sloc.png"></a>
   </p>
   <hr>
   <p style="text-indent: 0;">
@@ -505,6 +593,24 @@ img.kpi-chart:hover {
   </p>
 </body>
 ''').strip())
+
+def continue_without(timeout_s, reason, *args):
+  commands = list(args)
+  
+  cmds_complete = False
+  def run_all_cmds(commands):
+    nonlocal cmds_complete
+    for c in commands:
+      c()
+
+  t1 = threading.Thread(target=run_all_cmds, args=(commands,))
+  while not cmds_complete and timeout_s > 0.0:
+    time.sleep(0.1)
+    timeout_s -= 0.1
+
+  if not cmds_complete:
+    print('WARNING: skipping slow commands within continue_without because: {}'.format(reason))
+
 
 
 def main(args=sys.argv):
@@ -532,7 +638,9 @@ def main(args=sys.argv):
   remaining_tests_attempts = 2
   while remaining_tests_attempts > 0:
     try:
-      tests.main(['nobrowser'])
+      continue_without(5 * 60, 'Unit tests only get 5 minutes to run',
+        lambda: tests.main(['nobrowser']),
+      )
       break
     except:
       traceback.print_exc()
@@ -544,10 +652,9 @@ def main(args=sys.argv):
   if remaining_tests_attempts < 1: # TODO be more strict about this!
     raise Exception('tests did not complete!')
 
-  try:
-    docs.main(['nobrowser'])
-  except:
-    traceback.print_exc()
+  continue_without(60, 'Documentation only gets 60 seconds to run',
+    lambda: docs.main(['nobrowser']),
+  )
 
   # Checkout "www" branch into temp dir
   www_branch_d = tempfile.mkdtemp(prefix='loci_www_')
