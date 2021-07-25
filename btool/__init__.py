@@ -46,6 +46,7 @@ def download_tools():
   # fully bootstraped above
   expected_bins = [
     'javac', 'cargo', 'git',
+    'x86_64-w64-mingw32-windres',
     'aarch64-linux-android28-clang', 'aarch64-linux-gnu-gcc',
   ]
   for b in expected_bins:

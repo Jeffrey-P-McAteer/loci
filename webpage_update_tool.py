@@ -135,7 +135,7 @@ def get_dir_sloc(directory_or_file):
   else:
     total_sloc = 0
     exclude = [
-      'build', 'out', 'target', '.cargo', '__pycache__', 'bin', 'obj', 'lib', 'gen',
+      'build', 'out', 'target', '.cargo', '__pycache__', 'bin', 'obj', 'lib', 'gen', '.gradle',
       'Cargo.lock',
     ]
     exclude_extensions = [
@@ -642,7 +642,8 @@ def main(args=sys.argv):
   
   # tarpaulin likes to break, so we attempt it first then in the error handler we skip it.
   print('Running Tests...')
-  os.environ.pop('SKIP_TARPAULIN', '')
+  #os.environ.pop('SKIP_TARPAULIN', '')
+  os.environ['SKIP_TARPAULIN'] = 'y'
   os.environ['ALLOW_TESTS_TO_FAIL'] = 'y'
   remaining_tests_attempts = 2
   while remaining_tests_attempts > 0:
