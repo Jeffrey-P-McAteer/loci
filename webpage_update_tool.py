@@ -640,8 +640,9 @@ def main(args=sys.argv):
   delta_build_end = time.time()
   delta_build_duration_s = delta_build_end - delta_build_start
   
-  # tarpaulin likes to break, so we ~let~ skip it.
-  os.environ['SKIP_TARPAULIN'] = 'y'
+  # tarpaulin likes to break, so we attempt it first then in the error handler we skip it.
+  print('Running Tests...')
+  os.environ.pop('SKIP_TARPAULIN', '')
   os.environ['ALLOW_TESTS_TO_FAIL'] = 'y'
   remaining_tests_attempts = 2
   while remaining_tests_attempts > 0:
@@ -660,6 +661,7 @@ def main(args=sys.argv):
   if remaining_tests_attempts < 1: # TODO be more strict about this!
     raise Exception('tests did not complete!')
 
+  print('Generating Docs...')
   continue_without(60, 'Documentation only gets 60 seconds to run',
     lambda: docs.main(['nobrowser']),
   )
