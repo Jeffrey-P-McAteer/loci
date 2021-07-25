@@ -9,7 +9,7 @@ def buildall(args):
   build_win64 = flag_set('build_win64')
   build_linux_x86_64 = flag_set('build_linux_x86_64')
   build_linux_aarch64 = flag_set('build_linux_aarch64')
-  build_android = flag_set('build_win64')
+  build_android = flag_set('build_android')
 
   # Used to quicky refer to the repo root
   r = os.path.abspath('.')
