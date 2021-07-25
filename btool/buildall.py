@@ -180,8 +180,8 @@ def buildall(args):
         'https://www.smartmenus.org/files/?file=smartmenus-jquery/smartmenus-1.1.1.zip',
         j('www', 'lib', 'smartmenus'),
         and_then_with_dir=[
-          # lambda d: remove_files_by_glob(os.path.join(d, '**', '*.zip')),
-          # lambda d: remove_files_by_glob(os.path.join(d, '**', '*.exe')),
+          # ensure phones get desktop menu styles as well
+          lambda d: simple_replace(j(d, 'css', 'sm-simple', 'sm-simple.css'), '@media (min-width: 768px)', '@media (min-width: 8px)'),
         ]
       ),
       lambda: scale_image_once(j('..', '..', 'misc-res', 'icon.png'), j('www', 'gen', 'icon-192.png'), (192, 192)),

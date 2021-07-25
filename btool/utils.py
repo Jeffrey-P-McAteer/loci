@@ -488,6 +488,14 @@ def scale_image_once(src_img, dst_img, new_size_wh):
     out_format = 'PNG'
   im_r.save(dst_img, out_format)
 
+def simple_replace(file, match, replacement):
+  contents = ''
+  with open(file, 'r') as fd:
+    contents = fd.read()
 
+  contents = contents.replace(match, replacement)
+
+  with open(file, 'w') as fd:
+    fd.write(contents)
 
 
