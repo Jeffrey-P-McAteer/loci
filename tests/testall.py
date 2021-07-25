@@ -8,7 +8,9 @@ from tests.utils import *
 def run_all_tests(args):
 
   cargo_test_cmd = ['cargo', 'test']
+  package_arg = '--package'
   if btool.utils.host_is_linux() and not 'SKIP_TARPAULIN' in os.environ:
+    package_arg = '--packages'
     cargo_test_cmd = [
       'cargo', 'tarpaulin',
       '--tests', '--line', '--out', 'html',
@@ -21,10 +23,10 @@ def run_all_tests(args):
         print('Deleting {}'.format(f))
         os.remove(f)
 
-  unit_test_cmd(j('app-kernel'), cargo_test_cmd + ['--package', 'app-kernel'])
-  unit_test_cmd(j('app-lib'),    cargo_test_cmd + ['--package', 'app-lib'])
+  unit_test_cmd(j('app-kernel'), cargo_test_cmd + [package_arg, 'app-kernel'])
+  unit_test_cmd(j('app-lib'),    cargo_test_cmd + [package_arg, 'app-lib'])
 
-  unit_test_cmd(s('server-webgui'), cargo_test_cmd + ['--package', 'server-webgui'])
+  unit_test_cmd(s('server-webgui'), cargo_test_cmd + [package_arg, 'server-webgui'])
   
   api_test_cmd(s('server-webgui'), ['cargo', 'run', '--release'],
     lambda: tcp_connects_within('127.0.0.1', 7010, 5),

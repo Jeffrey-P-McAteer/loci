@@ -65,8 +65,16 @@ def download_rust():
       c('sh', '-c', 'curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --profile default --default-host x86_64-unknown-linux-gnu --default-toolchain stable-x86_64-unknown-linux-gnu')
       downloaded = True
 
+    # Add "bin" dirs to path, but SKIP any which do not have our arch in their full path.
+    desired_arch = 'x86_64'
+    if host_is_linux_aarch64():
+      desired_arch = 'aarch64'
+
     for dirname in pathlib.Path(linux_rust_dir).rglob('bin'):
-      os.environ['PATH'] = os.path.abspath(dirname)+os.pathsep+os.environ['PATH']
+      dirname = os.path.abspath(dirname)
+      if not desired_arch in dirname:
+        continue
+      os.environ['PATH'] = dirname+os.pathsep+os.environ['PATH']
 
   elif host_is_win():
     win_rust_dir = j('build', 'win-rust')

@@ -598,15 +598,23 @@ def continue_without(timeout_s, reason, *args):
   commands = list(args)
   
   cmds_complete = False
+  cmds_exception = None
   def run_all_cmds(commands):
     nonlocal cmds_complete
-    for c in commands:
-      c()
+    nonlocal cmds_exception
+    try:
+      for c in commands:
+        c()
+    except Exception as e:
+      cmds_exception = e
 
   t1 = threading.Thread(target=run_all_cmds, args=(commands,))
-  while not cmds_complete and timeout_s > 0.0:
+  while cmds_exception is None and not cmds_complete and timeout_s > 0.0:
     time.sleep(0.1)
     timeout_s -= 0.1
+
+  if not cmds_exception is None:
+    raise cmds_exception
 
   if not cmds_complete:
     print('WARNING: skipping slow commands within continue_without because: {}'.format(reason))
@@ -638,7 +646,7 @@ def main(args=sys.argv):
   remaining_tests_attempts = 2
   while remaining_tests_attempts > 0:
     try:
-      continue_without(5 * 60, 'Unit tests only get 5 minutes to run',
+      continue_without(10 * 60, 'Unit tests only get 10 minutes to run',
         lambda: tests.main(['nobrowser']),
       )
       break
