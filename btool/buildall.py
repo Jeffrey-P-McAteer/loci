@@ -168,6 +168,10 @@ def buildall(args):
         'https://files.worldwind.arc.nasa.gov/artifactory/apps/web/worldwind.min.js',
         j('www', 'lib', 'worldwind.min.js')
       ),
+      lambda: dl_archive_to_once(
+        'https://github.com/openlayers/openlayers/releases/download/v6.6.1/v6.6.1-dist.zip',
+        j('www', 'lib', 'openlayers')
+      ),
       lambda: dl_once(
         'https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.0/split.min.js',
         j('www', 'lib', 'split.min.js')

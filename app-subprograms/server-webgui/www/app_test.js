@@ -20,9 +20,9 @@ function app_spawn_test_api_calls() {
   }, 500);
 
   setTimeout(function() {
-    app_lib._create_left_tab('SMS', 110, 'app_lib._left_nav_to("google.com");', true, null);
-    app_lib._create_right_tab('Map', 300, 'app_lib._right_nav_to("google.com");', true, null);
-    app_lib._create_right_tab('Self', 110, 'app_lib._right_nav_to("https://worldwind.arc.nasa.gov/");', true, null);
+    app_lib._create_left_tab('SMS', 110, 'app_lib._left_nav_to("//bing.com");', true, null);
+    app_lib._create_right_tab('Map', 300, 'app_lib._right_nav_to("//google.com");', true, null);
+    app_lib._create_right_tab('Self', 110, 'app_lib._right_nav_to("//worldwind.arc.nasa.gov/");', true, null);
     app_lib._create_right_tab('End', 400, 'app_lib._right_nav_to("google.com");', false, null);
     app_lib._create_menu_item(['File', 'Address Book'], 50, 'alert(1);');
   }, 600);

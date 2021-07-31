@@ -130,13 +130,11 @@ class app_lib {
   }
 
   static _left_nav_to(url) {
-    console.log('// TODO left nav to ', url);
-
+    document.getElementById('app_active_left_tab').src = url;
   }
 
   static _right_nav_to(url) {
-    console.log('// TODO right nav to ', url);
-
+    document.getElementById('app_active_right_tab').src = url;
   }
 
   static _sort_children_by_weight(parent_elm) {
@@ -144,7 +142,7 @@ class app_lib {
     
     var children = parent_elm.children;
     var sortedChildren = [].slice.call(children).sort(function (a, b) {
-        return parseInt(a.getAttribute('weight') || default_weight) > parseInt(b.getAttribute('weight') || default_weight) ? 1 : -1;
+        return parseInt(a.getAttribute('weight') || default_weight, 10) > parseInt(b.getAttribute('weight') || default_weight, 10) ? 1 : -1;
     });
     sortedChildren.forEach(function (p) {
         parent_elm.appendChild(p);
