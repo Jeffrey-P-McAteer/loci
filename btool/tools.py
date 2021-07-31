@@ -243,7 +243,7 @@ def download_android_sdk():
       '--licenses'
     ],check=True, input=accept_stdin)
     subprocess.run([shutil.which('sdkmanager'), '--sdk_root={}'.format(sdk_root),
-      'emulator', 'platform-tools', 'platforms;android-28',
+      'emulator', 'platform-tools', 'platforms;android-29', 'platforms;android-28', 'platforms;android-27',
     ],check=True)
     subprocess.run([shutil.which('sdkmanager'), '--sdk_root={}'.format(sdk_root),
       'ndk-bundle',

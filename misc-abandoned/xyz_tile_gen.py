@@ -22,21 +22,22 @@ from btool.utils import dl_archive_to
 def setup_dependencies():
   # See https://github.com/systemed/tilemaker,
   # dev dependencies are documented at: https://github.com/systemed/tilemaker/blob/master/docs/INSTALL.md
-  tilemaker_dir = os.path.join('build', 'tilemaker')
-  if not os.path.exists(tilemaker_dir):
-    dl_archive_to(
-      'https://github.com/systemed/tilemaker/releases/download/v2.0.0/tilemaker-ubuntu-16.04.zip',
-      tilemaker_dir
-    )
+  
+  # tilemaker_dir = os.path.join('build', 'tilemaker')
+  # if not os.path.exists(tilemaker_dir):
+  #   dl_archive_to(
+  #     'https://github.com/systemed/tilemaker/releases/download/v2.0.0/tilemaker-ubuntu-16.04.zip',
+  #     tilemaker_dir
+  #   )
 
-  tilemaker_exe = os.path.join(tilemaker_dir, 'build', 'tilemaker')
-  subprocess.run([
-    'chmod', '+x', tilemaker_exe,
-  ])
+  # tilemaker_exe = os.path.join(tilemaker_dir, 'build', 'tilemaker')
+  # subprocess.run([
+  #   'chmod', '+x', tilemaker_exe,
+  # ])
 
-  os.environ['PATH'] = os.path.abspath(os.path.join(
-    tilemaker_dir, 'build',
-  )) + os.pathsep + os.environ['PATH']
+  # os.environ['PATH'] = os.path.abspath(os.path.join(
+  #   tilemaker_dir, 'build',
+  # )) + os.pathsep + os.environ['PATH']
 
 
 
@@ -128,12 +129,6 @@ def main(args=sys.argv):
     print('Using osmium to convert to .geojson: {}'.format(tile_geojson))
     subprocess.run([
       'osmium', 'export', '--progress', tile_osm_pbf, '-o', tile_geojson,
-    ], check=True)
-
-  if not os.path.exists(tile_mbtiles):
-    print('Using tilemaker to convert to .mbtiles format')
-    subprocess.run([
-      'tilemaker', '--input', tile_osm_pbf, '--output', tile_mbtiles,
     ], check=True)
 
   print('Done: {}'.format(tile_mbtiles))
