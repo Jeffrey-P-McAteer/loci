@@ -1,0 +1,17 @@
+
+# Used with loci-web-deploy.service,
+# copy this file to:
+#  /etc/systemd/system/loci-web-deploy.timer
+# 
+
+[Unit]
+Description=Runs loci-web-deploy.service periodically (every 6 hours)
+Requires=loci-web-deploy.service
+
+[Timer]
+Unit=loci-web-deploy.service
+OnCalendar=*-*-* *:00/6:00
+
+[Install]
+WantedBy=timers.target
+

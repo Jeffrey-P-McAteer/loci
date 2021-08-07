@@ -1,0 +1,34 @@
+
+# Responsible for pulling changes to a directory,
+# building loci, and using webpage_update_tool.py
+# to build a local directory of installer files.
+
+# To install first make sure dependencies are installed
+# (git, python)
+# and copy this file to /etc/systemd/system/loci-web-deploy.service
+# Then replace:
+#   GIT_AUTH_TOKEN with the github auth token for your account w/ pull permisisons
+# Then run:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now loci-web-deploy
+
+
+[Unit]
+Description=Pulls and builds loci from github
+
+[Service]
+User=root
+Group=nobody
+Type=simple
+Environment=REPO_URL=https://GIT_AUTH_TOKEN@github.com/Jeffrey-P-McAteer/loci.git
+Environment=REPO_CWD=/opt/loci
+ExecStartPre=-/usr/bin/mkdir $REPO_CWD
+ExecStartPre=/usr/bin/chown nobody:nobody $REPO_CWD
+ExecStartPre=/usr/bin/sudo -u nobody bash -c "if ! [ -d $REPO_CWD ] ; then git clone $REPO_URL $REPO_CWD ; else cd $REPO_CWD ; git pull $REPO_URL ; done"
+ExecStart=/usr/bin/sudo -u nobody python /opt/loci/misc-res/loci-web-deploy.py
+Restart=always
+RestartSec=90
+
+[Install]
+WantedBy=multi-user.target
+
