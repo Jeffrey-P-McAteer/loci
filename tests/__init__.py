@@ -51,5 +51,9 @@ def main(args=sys.argv):
     for file in Path('.').rglob('tarpaulin-report.html'):
       print('{}'.format(file))
       webbrowser.open(str(file.absolute()))
+
+  print('UNIT_TESTS_TOTAL={}'.format(os.environ.get('UNIT_TESTS_TOTAL', '0')))
+  print('UNIT_TESTS_PASSED={}'.format(os.environ.get('UNIT_TESTS_PASSED', '0')))
+  print('UNIT_TESTS_FAILED={}'.format(os.environ.get('UNIT_TESTS_FAILED', '0')))
     
 
