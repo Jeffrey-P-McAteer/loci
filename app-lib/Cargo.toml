@@ -22,16 +22,16 @@ serde_json = "1.0"
 locale_config = "0.3"
 
 [target.x86_64-unknown-linux-gnu.dependencies]
-shared_memory = "0.11"
+shared_memory = "0.12"
 
 [target.aarch64-unknown-linux-gnu.dependencies]
-shared_memory = "0.11"
+shared_memory = "0.12"
 
 
 [target.x86_64-pc-windows-gnu.dependencies]
 # Used to read HKEY_LOCAL_MACHINE for getting machine ID in license::get_host_hwid() -> String
 winreg = "0.6"
-shared_memory = "0.11"
+shared_memory = "0.12"
 
 
 [dev-dependencies]
