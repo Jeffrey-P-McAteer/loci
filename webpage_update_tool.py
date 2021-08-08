@@ -655,7 +655,7 @@ def main(args=sys.argv):
   remaining_tests_attempts = 2
   while remaining_tests_attempts > 0:
     try:
-      continue_without(10 * 60, 'Unit tests only get 10 minutes to run',
+      continue_without(20 * 60, 'Unit tests only get 20 minutes to run',
         lambda: tests.main(['nobrowser']),
       )
       break
@@ -670,7 +670,7 @@ def main(args=sys.argv):
     raise Exception('tests did not complete!')
 
   print('Generating Docs...')
-  continue_without(60, 'Documentation only gets 60 seconds to run',
+  continue_without(10 * 60, 'Documentation only gets 10 minutes to run',
     lambda: docs.main(['nobrowser']),
   )
 

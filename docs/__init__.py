@@ -20,8 +20,8 @@ def main(args=sys.argv):
   
   download_tools()
 
-  # Compile everything "hostonly" before running tests
-  btool_main(['hostonly'])
+  # Compile everything "hostonly" before building docs
+  #btool_main(['hostonly'])
 
   docs_webroot = j('out', 'docs')
   if not os.path.exists(docs_webroot):
