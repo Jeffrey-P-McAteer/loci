@@ -503,6 +503,7 @@ html, body {
   min-width: 50vw;
   max-width: 100vw;
   line-height: 1.35;
+  font-family: Sans-Serif;
 }
 p {
   text-indent: 2em;
