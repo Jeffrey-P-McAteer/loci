@@ -70,6 +70,8 @@ def download_rust():
     if host_is_linux_aarch64():
       desired_arch = 'aarch64'
 
+    os.environ['PATH'] = os.path.abspath(os.path.join(linux_rust_dir, 'bin'))+os.pathsep+os.environ['PATH']
+
     for dirname in pathlib.Path(linux_rust_dir).rglob('bin'):
       dirname = os.path.abspath(dirname)
       if not desired_arch in dirname:
@@ -87,6 +89,10 @@ def download_rust():
       c(rustup_bin, '-y', '--no-modify-path', '--profile', 'default', '--default-host', 'x86_64-pc-windows-gnu', '--default-toolchain', 'stable-x86_64-pc-windows-gnu')
       downloaded = True
 
+    desired_arch = 'x86_64'
+
+    os.environ['PATH'] = os.path.abspath(os.path.join(win_rust_dir, 'bin'))+os.pathsep+os.environ['PATH']
+
     for dirname in pathlib.Path(win_rust_dir).rglob('bin'):
       os.environ['PATH'] = os.path.abspath(dirname)+os.pathsep+os.environ['PATH']
 
@@ -100,7 +106,10 @@ def download_rust():
       )
 
     for dirname in pathlib.Path(win_mingw_dir).rglob('bin'):
-      os.environ['PATH'] = os.path.abspath(dirname)+os.pathsep+os.environ['PATH']
+      dirname = os.path.abspath(dirname)
+      if not desired_arch in dirname:
+        continue
+      os.environ['PATH'] = dirname+os.pathsep+os.environ['PATH']
 
     # We know we have gcc.exe, assign env hint to use it for all build tools
     os.environ['CC'] = shutil.which('gcc')
