@@ -367,7 +367,7 @@ def push_distributables_to_cdn(repo_root, misc_measures):
   if misc_measures['direct_folder']:
     for file in [win64_zip, linux_x86_64_tar_gz, linux_aarch64_tar_gz, android_apk]:
       if os.path.exists(file):
-        shutil.copy(file, direct_folder)
+        shutil.copy(file, misc_measures['direct_folder'])
     return '.'
 
   if not misc_measures['preview_mode']:
