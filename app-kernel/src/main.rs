@@ -19,8 +19,8 @@ mod run_geoserver;
 static exit_flag: AtomicBool = AtomicBool::new(false);
 
 // Embed data assigned by btool.
-const GIT_HASH: &'static str = env!("GIT_HASH");
-const COMPILE_TIME_EPOCH_SECONDS: &'static str = env!("COMPILE_TIME_EPOCH_SECONDS");
+const GIT_HASH: &'static str = option_env!("GIT_HASH").unwrap_or("SNAPSHOT");
+const COMPILE_TIME_EPOCH_SECONDS: &'static str = option_env!("COMPILE_TIME_EPOCH_SECONDS").unwrap_or("0");
 
 /**
  * This program coordinates running all processes
