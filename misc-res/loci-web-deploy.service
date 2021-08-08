@@ -24,9 +24,9 @@ Type=oneshot
 Environment="REPO_URL=https://GIT_AUTH_TOKEN@github.com/Jeffrey-P-McAteer/loci.git"
 Environment="REPO_CWD=/opt/loci"
 ExecStart=-/usr/bin/bash -c 'mkdir -p $REPO_CWD'
-ExecStart=/usr/bin/bash -c 'chown nobody:nobody $REPO_CWD'
+ExecStart=/usr/bin/bash -c 'chown -R nobody:nobody $REPO_CWD'
 ExecStart=/usr/bin/sudo -u nobody --preserve-env bash -c 'if ! [ -e $REPO_CWD/.git ] ; then git clone "$REPO_URL" $REPO_CWD ; else cd $REPO_CWD ; git pull ; fi'
-ExecStart=/usr/bin/sudo -u nobody --preserve-env python /opt/loci/misc-res/loci-web-deploy.py
+ExecStart=/usr/bin/sudo -u nobody --preserve-env HOME=/nobody python /opt/loci/misc-res/loci-web-deploy.py
 
 # Restart=always
 # RestartSec=90
