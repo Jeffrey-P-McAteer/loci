@@ -600,12 +600,12 @@ img.kpi-chart:hover {
     unmaintainably complex. The following metrics are tracked with every build and may be used to
     ensure the system is not rotting, becoming incorrect, or otherwise accumulating debt at a pace the dev team cannot pay off.
     <br>
-    <a href="full_build_times.png"><img class="kpi-chart" src="full_build_times.png"></a>
-    <a href="delta_build_times.png"><img class="kpi-chart" src="delta_build_times.png"></a>
-    <a href="build_sizes.png"><img class="kpi-chart" src="build_sizes.png"></a>
-    <a href="unit_tests.png"><img class="kpi-chart" src="unit_tests.png"></a>
-    <a href="features.png"><img class="kpi-chart" src="features.png"></a>
-    <a href="sloc.png"><img class="kpi-chart" src="sloc.png"></a>
+    <a href="full_build_times.png"><img class="kpi-chart" loading="lazy" width="400" height="300" src="full_build_times.png"></a>
+    <a href="delta_build_times.png"><img class="kpi-chart" loading="lazy" width="400" height="300" src="delta_build_times.png"></a>
+    <a href="build_sizes.png"><img class="kpi-chart" loading="lazy" width="400" height="300" src="build_sizes.png"></a>
+    <a href="unit_tests.png"><img class="kpi-chart" loading="lazy" width="400" height="300" src="unit_tests.png"></a>
+    <a href="features.png"><img class="kpi-chart" loading="lazy" width="400" height="300" src="features.png"></a>
+    <a href="sloc.png"><img class="kpi-chart" loading="lazy" width="400" height="300" src="sloc.png"></a>
   </p>
   <hr>
   <p style="text-indent: 0;">
