@@ -491,6 +491,7 @@ def update_www_dir(repo_root, misc_measures):
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Loci</title>
   <link rel="icon" type="image/png" href="icon.png"/>
   <style>
