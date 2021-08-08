@@ -627,6 +627,7 @@ def continue_without(timeout_s, reason, *args):
         c()
     except Exception as e:
       cmds_exception = e
+    cmds_complete = True
 
   t1 = threading.Thread(target=run_all_cmds, args=(commands,))
   while cmds_exception is None and not cmds_complete and timeout_s > 0.0:
