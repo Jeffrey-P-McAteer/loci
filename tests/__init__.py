@@ -31,7 +31,8 @@ def main(args=sys.argv):
   download_tools()
 
   # Compile everything "hostonly" before running tests
-  btool_main(['hostonly'])
+  if not ('NO_PRECOMPILE' in os.environ and len(os.environ['NO_PRECOMPILE']) > 0):
+    btool_main(['hostonly'])
 
   # Now we have all SDKs installed, run the tests
   # The first test to fail stops the entire script, having less

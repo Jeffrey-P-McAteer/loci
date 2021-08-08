@@ -631,6 +631,7 @@ def continue_without(timeout_s, reason, *args):
     cmds_complete = True
 
   t1 = threading.Thread(target=run_all_cmds, args=(commands,))
+  t1.start()
   while cmds_exception is None and not cmds_complete and timeout_s > 0.0:
     time.sleep(0.1)
     timeout_s -= 0.1
@@ -664,6 +665,8 @@ def main(args=sys.argv):
   btool.main(['nobrowser'])
   delta_build_end = time.time()
   delta_build_duration_s = delta_build_end - delta_build_start
+
+  os.environ['NO_PRECOMPILE'] = '1'
 
   master_commit = str(subprocess.check_output(['git', 'rev-parse', 'master']), 'utf-8').strip()
   
