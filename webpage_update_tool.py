@@ -11,6 +11,10 @@
 
 # Assign CLEAN_WWW_HISTORIC_DATA=1 to remove all historic data + start fresh.
 
+# Call with arguments "direct_folder /tmp/anywhere/" to fill /tmp/anywhere
+# with website data instead of the www branch + remote ftp server.
+
+
 import os
 import sys
 import subprocess
