@@ -19,8 +19,8 @@ mod run_geoserver;
 static exit_flag: AtomicBool = AtomicBool::new(false);
 
 // Embed data assigned by btool.
-const GIT_HASH: &'static str = option_env!("GIT_HASH").unwrap_or("SNAPSHOT");
-const COMPILE_TIME_EPOCH_SECONDS: &'static str = option_env!("COMPILE_TIME_EPOCH_SECONDS").unwrap_or("0");
+const GIT_HASH: Option<&'static str> = option_env!("GIT_HASH");
+const COMPILE_TIME_EPOCH_SECONDS: Option<&'static str> = option_env!("COMPILE_TIME_EPOCH_SECONDS");
 
 /**
  * This program coordinates running all processes
@@ -34,7 +34,7 @@ const COMPILE_TIME_EPOCH_SECONDS: &'static str = option_env!("COMPILE_TIME_EPOCH
 fn main() {
   exit_flag.store(false, Ordering::Relaxed);
   hide_console_on_windows();
-  eprintln!("GIT_HASH={}", GIT_HASH);
+  eprintln!("GIT_HASH={}", GIT_HASH.unwrap_or("SNAPSHOT"));
   move_to_exe_dir();
   if let Ok(current_dir) = env::current_dir() {
     add_to_path(current_dir);
@@ -147,7 +147,7 @@ fn kernel_compiled_within_48h() -> bool {
   use std::time::{SystemTime, UNIX_EPOCH};
   if let Ok(now_sec) = SystemTime::now().duration_since(UNIX_EPOCH) {
     let now_sec = now_sec.as_secs() as u64;
-    if let Ok(binary_created_sec) = COMPILE_TIME_EPOCH_SECONDS.parse::<u64>() {
+    if let Ok(binary_created_sec) = COMPILE_TIME_EPOCH_SECONDS.unwrap_or("0").parse::<u64>() {
       if now_sec > binary_created_sec {
         let age_seconds: u64 = now_sec - binary_created_sec;
         return age_seconds < (48*60*60);
