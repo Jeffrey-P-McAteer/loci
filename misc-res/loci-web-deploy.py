@@ -14,6 +14,9 @@ def main(args=sys.argv):
     os.path.dirname(os.path.dirname( os.path.abspath(__file__) ))
   )
 
+  # Ensures 3rdparty packages exist
+  subprocess.run([sys.executable, '-m', 'python_packages'], check=True)
+
   # Build all targets
   cmd(sys.executable, '-m', 'btool')
   
