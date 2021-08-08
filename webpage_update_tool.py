@@ -377,21 +377,28 @@ def push_distributables_to_cdn(repo_root, misc_measures):
   linux_aarch64_tar_gz = j(repo_root, 'out', 'www', 'linux_aarch64.tar.gz')
   android_apk = j(repo_root, 'out', 'android', 'loci.apk')
 
+  if misc_measures['direct_folder']:
+    for file in [win64_zip, linux_x86_64_tar_gz, linux_aarch64_tar_gz, android_apk]:
+      if os.path.exists(file):
+        shutil.copy(file, direct_folder)
+    return '.'
+
   if not misc_measures['preview_mode']:
     if shutil.which('rsync') and shutil.which('sshpass'):
 
       for file in [win64_zip, linux_x86_64_tar_gz, linux_aarch64_tar_gz, android_apk]:
-        subprocess.run([
-          shutil.which('sshpass'),
-          '-p', os.environ['CDN_PASS'],
-          shutil.which('rsync'),
-          '-e', 'ssh -o StrictHostKeyChecking=no',
-          '--block-size={}'.format(32*1024),
-          '--progress',
-          file,
-          '{}@rsync.adrive.com:./www/'.format(os.environ['CDN_USER'])
-        ], check=True)
-        print('Done {}!'.format(os.path.basename(file)))
+        if os.path.exists(file):
+          subprocess.run([
+            shutil.which('sshpass'),
+            '-p', os.environ['CDN_PASS'],
+            shutil.which('rsync'),
+            '-e', 'ssh -o StrictHostKeyChecking=no',
+            '--block-size={}'.format(32*1024),
+            '--progress',
+            file,
+            '{}@rsync.adrive.com:./www/'.format(os.environ['CDN_USER'])
+          ], check=True)
+          print('Done {}!'.format(os.path.basename(file)))
 
     else:
       print('Rsync+sshpass not found, falling back to FTP (much slower)...')
@@ -414,18 +421,25 @@ def push_distributables_to_cdn(repo_root, misc_measures):
         sys.stdout.write('\b')
         sys.stdout.flush()
 
-      with open(win64_zip, 'rb') as fp:
-        ftp.storbinary('STOR win64.zip', fp, callback=progress_cb)
-      print('Done win64.zip!')
-      with open(linux_x86_64_tar_gz, 'rb') as fp:
-        ftp.storbinary('STOR linux_x86_64.tar.gz', fp, callback=progress_cb)
-      print('Done linux_x86_64.tar.gz!')
-      with open(linux_aarch64_tar_gz, 'rb') as fp:
-        ftp.storbinary('STOR linux_aarch64.tar.gz', fp, callback=progress_cb)
-      print('Done linux_aarch64.tar.gz!')
-      with open(android_apk, 'rb') as fp:
-        ftp.storbinary('STOR loci.apk', fp, callback=progress_cb)
-      print('Done loci.apk!')
+      if os.path.exists(win64_zip):
+        with open(win64_zip, 'rb') as fp:
+          ftp.storbinary('STOR win64.zip', fp, callback=progress_cb)
+        print('Done win64.zip!')
+
+      if os.path.exists(linux_x86_64_tar_gz):
+        with open(linux_x86_64_tar_gz, 'rb') as fp:
+          ftp.storbinary('STOR linux_x86_64.tar.gz', fp, callback=progress_cb)
+        print('Done linux_x86_64.tar.gz!')
+
+      if os.path.exists(linux_aarch64_tar_gz):
+        with open(linux_aarch64_tar_gz, 'rb') as fp:
+          ftp.storbinary('STOR linux_aarch64.tar.gz', fp, callback=progress_cb)
+        print('Done linux_aarch64.tar.gz!')
+
+      if os.path.exists(android_apk):
+        with open(android_apk, 'rb') as fp:
+          ftp.storbinary('STOR loci.apk', fp, callback=progress_cb)
+        print('Done loci.apk!')
 
       ftp.quit()
 
@@ -627,7 +641,10 @@ def main(args=sys.argv):
     raise Exception('Must be run from top of repository')
 
   preview_mode = 'PREVIEW' in os.environ and len(os.environ['PREVIEW']) > 0
-
+  direct_folder = None
+  if 'direct_folder' in args and args.index('direct_folder') < len(args)-1:
+    direct_folder = os.path.abspath( args[args.index('direct_folder') + 1] )
+    
   repo_root = os.path.abspath('.')
 
   full_build_start = time.time()
@@ -668,7 +685,10 @@ def main(args=sys.argv):
   )
 
   # Checkout "www" branch into temp dir
-  www_branch_d = tempfile.mkdtemp(prefix='loci_www_')
+  if direct_folder:
+    www_branch_d = direct_folder
+  else:
+    www_branch_d = tempfile.mkdtemp(prefix='loci_www_')
   try:
     os.environ['GIT_DISCOVERY_ACROSS_FILESYSTEM'] = '1'
     # Attempt to prune previous "www" prunable directories
@@ -681,43 +701,48 @@ def main(args=sys.argv):
         ])
         time.sleep(0.75)
 
-    subprocess.run([
-      'git', 'worktree', 'add', www_branch_d, 'www',
-    ])
+    if not direct_folder:
+      subprocess.run([
+        'git', 'worktree', 'add', www_branch_d, 'www',
+      ])
     os.chdir(www_branch_d)
 
     update_www_dir(repo_root, {
       'full_build_duration_s': full_build_duration_s,
       'delta_build_duration_s': delta_build_duration_s,
       'preview_mode': preview_mode,
+      'direct_folder': direct_folder,
     })
 
     if preview_mode:
       webbrowser.open(os.path.abspath('index.html'))
       input('Press enter to commit + cleanup...')
 
+    if not direct_folder:
     # Alter current commit to include new changes
-    subprocess.run(['git', 'add', '--all'], check=True)
-    subprocess.run(['git', 'commit', '--amend', '--no-edit'], check=True)
+      subprocess.run(['git', 'add', '--all'], check=True)
+      subprocess.run(['git', 'commit', '--amend', '--no-edit'], check=True)
 
-    # Force override remote branch
-    subprocess.run(['git', 'push', '-f'], check=True)
+      # Force override remote branch
+      subprocess.run(['git', 'push', '-f'], check=True)
 
   except:
     traceback.print_exc()
   finally:
     os.chdir(repo_root)
-    if not 'NO_RM' in os.environ:
-      subprocess.run([
-        'git', 'worktree', 'remove', www_branch_d,
-      ])
-      if os.path.exists(www_branch_d):
-        shutil.rmtree(www_branch_d)
-    else:
-      print('NO_RM set, left files intact at {}'.format(www_branch_d))
+    if not direct_folder:
+      if not 'NO_RM' in os.environ:
+        subprocess.run([
+          'git', 'worktree', 'remove', www_branch_d,
+        ])
+        if os.path.exists(www_branch_d):
+          shutil.rmtree(www_branch_d)
+      else:
+        print('NO_RM set, left files intact at {}'.format(www_branch_d))
 
   print('Done, see published site at https://jeffrey-p-mcateer.github.io/loci/')
-
+  if direct_folder:
+    print('direct_folder = {}'.format(direct_folder))
 
 
 if __name__ == '__main__':
