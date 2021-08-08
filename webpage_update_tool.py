@@ -63,6 +63,18 @@ def trim_list(the_list, max_items):
   if len(the_list) > max_items:
     the_list.pop(0)
 
+def maybe_optim_png(png_file):
+  if shutil.which('optipng') and shutil.which('pngcrush'):
+    subprocess.run([
+      'pngcrush', '-ow', '-m', '0', '-rem', 'allb', '-brute', '-reduce', png_file,
+    ])
+    subprocess.run([
+      'optipng', '-o7', png_file
+    ])
+  else:
+    print('WARNING: not optimizing {} because `optipng` and `pngcrush` not installed!'.format(png_file))
+
+
 # returns total, passed, failed.
 # See record_unit_test_metadata_to_os_environ in tests/utils.py
 def get_unit_test_data(repo_root, misc_measures):
@@ -257,6 +269,7 @@ def gen_kpi_graphs(repo_root):
   ax.grid(True)
   fig.autofmt_xdate()
   fig.savefig('full_build_times.png')
+  maybe_optim_png('full_build_times.png')
 
 
 
@@ -272,6 +285,7 @@ def gen_kpi_graphs(repo_root):
   ax.grid(True)
   fig.autofmt_xdate()
   fig.savefig('delta_build_times.png')
+  maybe_optim_png('delta_build_times.png')
 
 
   build_size_x = [datetime.datetime.fromtimestamp(x['utc_epoch_seconds']) for x in build_data['build_size']]
@@ -293,6 +307,7 @@ def gen_kpi_graphs(repo_root):
   fig.autofmt_xdate()
   fig.legend()
   fig.savefig('build_sizes.png')
+  maybe_optim_png('build_sizes.png')
 
 
 
@@ -313,6 +328,7 @@ def gen_kpi_graphs(repo_root):
   fig.autofmt_xdate()
   fig.legend()
   fig.savefig('unit_tests.png')
+  maybe_optim_png('unit_tests.png')
 
 
   features_x = [datetime.datetime.fromtimestamp(x['utc_epoch_seconds']) for x in build_data['features']]
@@ -332,6 +348,7 @@ def gen_kpi_graphs(repo_root):
   fig.autofmt_xdate()
   fig.legend()
   fig.savefig('features.png')
+  maybe_optim_png('features.png')
 
 
   sloc_x = [datetime.datetime.fromtimestamp(x['utc_epoch_seconds']) for x in build_data['sloc']]
@@ -353,6 +370,7 @@ def gen_kpi_graphs(repo_root):
   fig.autofmt_xdate()
   fig.legend()
   fig.savefig('sloc.png')
+  maybe_optim_png('sloc.png')
 
 
 # Returns the parent dir for all uploaded files
