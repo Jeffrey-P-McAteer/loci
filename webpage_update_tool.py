@@ -444,16 +444,17 @@ def update_www_dir(repo_root, misc_measures):
   storage_cdn_base_url = push_distributables_to_cdn(repo_root, misc_measures)
   
 
-  if os.path.exists('api-docs'):
-    shutil.rmtree('api-docs')
-  shutil.copytree(j(repo_root, 'out', 'docs'), 'api-docs')
+  if os.path.exists(j(repo_root, 'out', 'docs')):
+    if os.path.exists('api-docs'):
+      shutil.rmtree('api-docs')
+    shutil.copytree(j(repo_root, 'out', 'docs'), 'api-docs')
 
   if os.path.exists('noapp-www'):
     shutil.rmtree('noapp-www')
   shutil.copytree(j(repo_root, 'app-subprograms', 'server-webgui', 'www'), 'noapp-www')
 
   # Read some repo metadata
-  master_commit = str(subprocess.check_output(['git', 'rev-parse', 'master']), 'utf-8').strip()
+  master_commit = misc_measures['master_commit']
   
   publish_utc_epoch_seconds = time.mktime(time.gmtime())
   publish_ts = datetime.datetime.fromtimestamp(publish_utc_epoch_seconds).strftime('%Y-%m-%d %H:%M:%S')
@@ -643,6 +644,8 @@ def main(args=sys.argv):
   btool.main(['nobrowser'])
   delta_build_end = time.time()
   delta_build_duration_s = delta_build_end - delta_build_start
+
+  master_commit = str(subprocess.check_output(['git', 'rev-parse', 'master']), 'utf-8').strip()
   
   # tarpaulin likes to break, so we attempt it first then in the error handler we skip it.
   print('Running Tests...')
@@ -699,6 +702,7 @@ def main(args=sys.argv):
       'delta_build_duration_s': delta_build_duration_s,
       'preview_mode': preview_mode,
       'direct_folder': direct_folder,
+      'master_commit': master_commit,
     })
 
     if preview_mode:
