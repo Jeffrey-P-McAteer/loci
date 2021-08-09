@@ -173,6 +173,8 @@ def get_sloc(repo_root, misc_measures):
   return total, build_code, config_code, app_code
 
 def update_kpi_data(repo_root, misc_measures):
+  KPI_TRIM_HISTORY = 24
+
   delta_build_duration_s = misc_measures['delta_build_duration_s']
   full_build_duration_s = misc_measures['full_build_duration_s']
   publish_utc_epoch_seconds = misc_measures['publish_utc_epoch_seconds']
@@ -184,7 +186,7 @@ def update_kpi_data(repo_root, misc_measures):
   if not 'raw_build_times' in build_data:
     build_data['raw_build_times'] = []
 
-  trim_list(build_data['raw_build_times'], 20)
+  trim_list(build_data['raw_build_times'], KPI_TRIM_HISTORY)
 
   build_data['raw_build_times'].append({
     'utc_epoch_seconds': publish_utc_epoch_seconds,
@@ -196,7 +198,7 @@ def update_kpi_data(repo_root, misc_measures):
   if not 'unit_tests' in build_data:
     build_data['unit_tests'] = []
 
-  trim_list(build_data['unit_tests'], 20)
+  trim_list(build_data['unit_tests'], KPI_TRIM_HISTORY)
 
   total, passed, failed = get_unit_test_data(repo_root, misc_measures)
   build_data['unit_tests'].append({
@@ -209,7 +211,7 @@ def update_kpi_data(repo_root, misc_measures):
   if not 'build_size' in build_data:
     build_data['build_size'] = []
 
-  trim_list(build_data['build_size'], 20)
+  trim_list(build_data['build_size'], KPI_TRIM_HISTORY)
 
   win_64_size, linux_x86_64_size, linux_aarch64_size, android_size = get_build_sizes(repo_root, misc_measures)
   build_data['build_size'].append({
@@ -224,7 +226,7 @@ def update_kpi_data(repo_root, misc_measures):
   if not 'features' in build_data:
     build_data['features'] = []
 
-  trim_list(build_data['features'], 20)
+  trim_list(build_data['features'], KPI_TRIM_HISTORY)
 
   total, in_progress, not_yet_started = get_features_data(repo_root, misc_measures)
   build_data['features'].append({
@@ -238,7 +240,7 @@ def update_kpi_data(repo_root, misc_measures):
   if not 'sloc' in build_data:
     build_data['sloc'] = []
 
-  trim_list(build_data['sloc'], 20)
+  trim_list(build_data['sloc'], KPI_TRIM_HISTORY)
   
   total, build_code, config_code, app_code = get_sloc(repo_root, misc_measures)
   build_data['sloc'].append({
@@ -255,6 +257,10 @@ def update_kpi_data(repo_root, misc_measures):
 
 def gen_kpi_graphs(repo_root):
   build_data = read_json('kbi_build_data.json')
+
+  # Offset in points for all graphs, to right and up of points
+  xytext = (3.0, -3.5)
+
   # We may assume build_data is initialized
   
   full_build_times_x = [datetime.datetime.fromtimestamp(x['utc_epoch_seconds']) for x in build_data['raw_build_times']]
@@ -262,6 +268,9 @@ def gen_kpi_graphs(repo_root):
 
   fig, ax = matplotlib.pyplot.subplots()
   ax.plot_date(full_build_times_x, full_build_times_y, linestyle='solid', color='#17517e')
+  for x1, y1 in zip(full_build_times_x, full_build_times_y):
+    ax.annotate('{0:.1f}min'.format(y1 / 60.0), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Full Build Times')
@@ -278,6 +287,8 @@ def gen_kpi_graphs(repo_root):
 
   fig, ax = matplotlib.pyplot.subplots()
   ax.plot_date(delta_build_times_x, delta_build_times_y, linestyle='solid', color='#17517e')
+  for x1, y1 in zip(delta_build_times_x, delta_build_times_y):
+    ax.annotate('{0:.1f}min'.format(y1 / 60.0), xy=(x1, y1), textcoords='offset points', xytext=xytext)
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Delta Build Times')
@@ -299,6 +310,9 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(build_size_x, build_size_y_linux_x86_64, linestyle='solid', label='Linux x86_64', color='#078451')
   ax.plot_date(build_size_x, build_size_y_linux_aarch64, linestyle='solid', label='Linux aarch64', color='#FAD5A5')
   ax.plot_date(build_size_x, build_size_y_android, linestyle='solid', label='Android 21+', color='#FF3D00')
+  for y_range in [build_size_y_win64, build_size_y_linux_x86_64, build_size_y_linux_aarch64, build_size_y_android]:
+    for x1, y1 in zip(build_size_x, y_range):
+      ax.annotate('{0:.1f}mb'.format(y1), xy=(x1, y1), textcoords='offset points', xytext=xytext)
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Build Sizes')
@@ -320,6 +334,9 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(unit_tests_x, unit_tests_y_total, linestyle='solid', label='Total Tests', color='#17517e')
   ax.plot_date(unit_tests_x, unit_tests_y_passed, linestyle='solid', label='Passed', color='#078451')
   ax.plot_date(unit_tests_x, unit_tests_y_failed, linestyle='solid', label='Failed', color='#FF3D00')
+  for y_range in [unit_tests_y_total, unit_tests_y_passed, unit_tests_y_failed]:
+    for x1, y1 in zip(unit_tests_x, y_range):
+      ax.annotate('{0}'.format(int(y1)), xy=(x1, y1), textcoords='offset points', xytext=xytext)
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Unit Tests')
@@ -340,6 +357,9 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(features_x, features_y_total, linestyle='solid', label='Total Features', color='#17517e')
   ax.plot_date(features_x, features_y_in_progress, linestyle='solid', label='In Progress', color='#078451')
   ax.plot_date(features_x, features_y_not_yet_started, linestyle='solid', label='Not Yet Started', color='#FF3D00')
+  for y_range in [features_y_total, features_y_in_progress, features_y_not_yet_started]:
+    for x1, y1 in zip(features_x, y_range):
+      ax.annotate('{0}'.format(int(y1)), xy=(x1, y1), textcoords='offset points', xytext=xytext)
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Features')
@@ -362,6 +382,9 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(sloc_x, sloc_y_build_code, linestyle='solid', label='Build System', color='#1474FA')
   ax.plot_date(sloc_x, sloc_y_config_code, linestyle='solid', label='Configuration', color='#22FA23')
   ax.plot_date(sloc_x, sloc_y_app_code, linestyle='solid', label='Application', color='#FAB01C')
+  for y_range in [sloc_y_total, sloc_y_build_code, sloc_y_config_code, sloc_y_app_code]:
+    for x1, y1 in zip(sloc_x, y_range):
+      ax.annotate('{0:,}'.format(int(y1)), xy=(x1, y1), textcoords='offset points', xytext=xytext)
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('SLOC')
