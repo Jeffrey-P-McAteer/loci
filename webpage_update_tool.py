@@ -311,8 +311,12 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(build_size_x, build_size_y_linux_aarch64, linestyle='solid', label='Linux aarch64', color='#FAD5A5')
   ax.plot_date(build_size_x, build_size_y_android, linestyle='solid', label='Android 21+', color='#FF3D00')
   for y_range in [build_size_y_win64, build_size_y_linux_x86_64, build_size_y_linux_aarch64, build_size_y_android]:
+    last_y1 = None
     for x1, y1 in zip(build_size_x, y_range):
-      ax.annotate('{0:.1f}mb'.format(y1), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+      a_str = '{0:.1f}mb'.format(y1)
+      if last_y1 is None or last_y1 != a_str:
+        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Build Sizes')
@@ -335,8 +339,12 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(unit_tests_x, unit_tests_y_passed, linestyle='solid', label='Passed', color='#078451')
   ax.plot_date(unit_tests_x, unit_tests_y_failed, linestyle='solid', label='Failed', color='#FF3D00')
   for y_range in [unit_tests_y_total, unit_tests_y_passed, unit_tests_y_failed]:
+    last_y1 = None
     for x1, y1 in zip(unit_tests_x, y_range):
-      ax.annotate('{0}'.format(int(y1)), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+      a_str = '{0}'.format(int(y1))
+      if last_y1 is None or last_y1 != a_str:
+        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Unit Tests')
@@ -358,8 +366,12 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(features_x, features_y_in_progress, linestyle='solid', label='In Progress', color='#078451')
   ax.plot_date(features_x, features_y_not_yet_started, linestyle='solid', label='Not Yet Started', color='#FF3D00')
   for y_range in [features_y_total, features_y_in_progress, features_y_not_yet_started]:
+    last_y1 = None
     for x1, y1 in zip(features_x, y_range):
-      ax.annotate('{0}'.format(int(y1)), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+      a_str = '{0}'.format(int(y1))
+      if last_y1 is None or last_y1 != a_str:
+        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('Features')
@@ -383,8 +395,12 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(sloc_x, sloc_y_config_code, linestyle='solid', label='Configuration', color='#22FA23')
   ax.plot_date(sloc_x, sloc_y_app_code, linestyle='solid', label='Application', color='#FAB01C')
   for y_range in [sloc_y_total, sloc_y_build_code, sloc_y_config_code, sloc_y_app_code]:
+    last_y1 = None
     for x1, y1 in zip(sloc_x, y_range):
-      ax.annotate('{0:,}'.format(int(y1)), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+      a_str = '{0:,}'.format(int(y1))
+      if last_y1 is None or last_y1 != a_str:
+        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
   ax.set_title('SLOC')
