@@ -30,6 +30,7 @@ def main(args=sys.argv):
 
   if last_build_hash in current_build_hash or current_build_hash in last_build_hash:
     print('Exiting because current_build_hash={} and last_build_hash={}'.format(current_build_hash, last_build_hash))
+    print('Remove /tmp/.last_build_hash to force a run.')
     return
 
 
