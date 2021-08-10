@@ -10,7 +10,7 @@ Requires=loci-web-deploy.service
 
 [Timer]
 Unit=loci-web-deploy.service
-OnCalendar=*-*-* *:00/6:00
+OnCalendar=*-*-* 00/6:00:00
 
 [Install]
 WantedBy=timers.target
