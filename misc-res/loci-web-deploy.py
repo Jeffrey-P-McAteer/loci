@@ -14,6 +14,25 @@ def main(args=sys.argv):
     os.path.dirname(os.path.dirname( os.path.abspath(__file__) ))
   )
 
+  # Check current vs previous build hash & exit if already processed
+  current_build_hash = str(subprocess.check_output([
+    'git', 'rev-parse', 'HEAD',
+  ]), 'utf-8').strip()
+  last_build_hash = 'NONE'
+  try:
+    with open('/tmp/.last_build_hash', 'r') as fd:
+      last_build_hash = fd.read()
+      if not isinstance(last_build_hash, str):
+        last_build_hash = str(last_build_hash, 'utf-8')
+      last_build_hash = last_build_hash.strip()
+  except Exception as e:
+    print(e)
+
+  if last_build_hash in current_build_hash or current_build_hash in last_build_hash:
+    print('Exiting because current_build_hash={} and last_build_hash={}'.format(current_build_hash, last_build_hash))
+    return
+
+
   # Ensures 3rdparty packages exist
   subprocess.run([sys.executable, '-m', 'python_packages'], check=True)
 
@@ -22,6 +41,14 @@ def main(args=sys.argv):
   
   # Ask webpage_update_tool to drop www/ into /usr/share/nginx/html/
   cmd(sys.executable, '-m', 'webpage_update_tool', 'direct_folder', '/usr/share/nginx/html/')
+
+
+  # Finally record which version got written up
+  try:
+    with open('/tmp/.last_build_hash', 'w') as fd:
+      fd.write(current_build_hash)
+  except Exception as e:
+    print(e)
   
 
 
