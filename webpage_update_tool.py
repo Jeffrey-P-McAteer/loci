@@ -270,9 +270,9 @@ def gen_kpi_graphs(repo_root):
   ax.plot_date(full_build_times_x, full_build_times_y, linestyle='solid', color='#17517e')
   if len(full_build_times_x) > 12:
     build_times_mod = 4
-  else if len(full_build_times_x) > 6:
+  elif len(full_build_times_x) > 6:
     build_times_mod = 3
-  else if len(full_build_times_x) > 3:
+  elif len(full_build_times_x) > 3:
     build_times_mod = 2
   else:
     build_times_mod = 1
