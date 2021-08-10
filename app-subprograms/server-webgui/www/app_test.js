@@ -15,6 +15,7 @@ function app_spawn_test_api_calls() {
     app_lib._create_menu_item(['Edit', 'Garbage', 'Number0'], 0, 'alert(2);');
     app_lib._create_menu_item(['Edit', 'Garbage', 'Number51'], 51, 'alert(2);');
     app_lib._create_menu_item(['Edit', 'Garbage', 'Number100'], 100, 'alert(2);');
+    app_lib._create_menu_item(['Edit', 'Garbage', 'Number999'], 999, 'alert(2);');
     app_lib._create_menu_item(['Edit', 'AfterGarbage', 'Number100'], 100, 'alert(2);');
 
   }, 500);

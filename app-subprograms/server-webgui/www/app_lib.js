@@ -141,9 +141,22 @@ class app_lib {
     var default_weight = '500';
     
     var children = parent_elm.children;
-    var sortedChildren = [].slice.call(children).sort(function (a, b) {
-        return parseInt(a.getAttribute('weight') || default_weight, 10) > parseInt(b.getAttribute('weight') || default_weight, 10) ? 1 : -1;
-    });
+    // Sort children (browser-specific because of dumb sort rules)
+    var sortedChildren = [];
+    if (navigator.userAgent.indexOf("Firefox") > 0) {
+      sortedChildren = [].slice.call(children).sort(function (a, b) {
+          return parseInt(a.getAttribute('weight') || default_weight, 10) > parseInt(b.getAttribute('weight') || default_weight, 10) ? 1 : -1;
+      });
+    }
+    else {
+      sortedChildren = [].slice.call(children);
+      sortedChildren.sort(c => parseInt(c.getAttribute('weight') || default_weight, 10));
+    }
+    // Remove children
+    while (parent_elm.firstChild) {
+      parent_elm.removeChild(parent_elm.lastChild);
+    }
+    // Add in sorted order
     sortedChildren.forEach(function (p) {
         parent_elm.appendChild(p);
     });

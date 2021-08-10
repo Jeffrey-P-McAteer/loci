@@ -4,7 +4,7 @@
  */
 
 // Update the name of the cache with each major revision to invalidate old app fragments
-var cacheName = 'app-pwa-v0.0.5';
+var cacheName = 'app-pwa-v0.0.6';
 
 // Caching only occurs on these hosts b/c development is slow when you have to
 // constantly bump a version number.
