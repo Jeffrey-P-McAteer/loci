@@ -259,7 +259,7 @@ def gen_kpi_graphs(repo_root):
   build_data = read_json('kbi_build_data.json')
 
   # Offset in points for all graphs, to right and up of points
-  xytext = (6.0, -3.5)
+  xytext = (6.0, -16.0)
 
   # We may assume build_data is initialized
   
