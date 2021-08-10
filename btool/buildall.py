@@ -309,8 +309,7 @@ def buildall(args):
   )
 
 
-  # Finally assemble a web www/ directory containing win64/linux64/android downloads
-  # This directory may be hosted anywhere to let users download the program.
+  # Finally assemble a web www/ directory containing win64/linux64/android distributables
   if not flag_set('hostonly'):
     build_www(build_win64, build_linux_x86_64, build_linux_aarch64, build_android, not 'nobrowser' in args)
 
