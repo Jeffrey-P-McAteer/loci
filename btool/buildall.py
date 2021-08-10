@@ -218,37 +218,37 @@ def buildall(args):
 
 
   # TODO hunt down build failure which showed up on all targets after modifying tools.py to add aarch64 tools to PATH
-  # silenced_task(
-  #   'Building desktop-cli',
-  #   force_code_rebuilds_conditional_touch(inputs(
-  #     j('app-subprograms', 'desktop-cli', 'src'),
-  #     j('app-subprograms', 'desktop-cli', 'Cargo.toml')
-  #   )),
-  #   outputs(
-  #     j('out', 'linux_x86_64', 'desktop-cli'),
-  #     j('out', 'linux_aarch64', 'desktop-cli'),
-  #     j('out', 'win64', 'desktop-cli.exe'),
-  #   ),
-  #   lambda: within(
-  #     j('app-subprograms', 'desktop-cli'),
-  #     # Build standalone cli exe shell
-  #     lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'x86_64-pc-windows-gnu') if build_win64 else None,
-  #     lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'x86_64-unknown-linux-gnu') if build_linux_x86_64 else None,
-  #     lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'aarch64-unknown-linux-gnu') if build_linux_aarch64 else None,
-  #   ),
-  #   lambda: assemble_in_win64(
-  #     j('app-subprograms', 'desktop-cli', 'target', 'x86_64-pc-windows-gnu', 'release', 'desktop-cli.exe'),
-  #     'desktop-cli.exe'
-  #   ),
-  #   lambda: assemble_in_linux_x86_64(
-  #     j('app-subprograms', 'desktop-cli', 'target', 'x86_64-unknown-linux-gnu', 'release', 'desktop-cli'),
-  #     'desktop-cli'
-  #   ),
-  #   lambda: assemble_in_linux_aarch64(
-  #     j('app-subprograms', 'desktop-cli', 'target', 'aarch64-unknown-linux-gnu', 'release', 'desktop-cli'),
-  #     'desktop-cli'
-  #   ),
-  # )
+  silenced_task(
+    'Building desktop-cli',
+    force_code_rebuilds_conditional_touch(inputs(
+      j('app-subprograms', 'desktop-cli', 'src'),
+      j('app-subprograms', 'desktop-cli', 'Cargo.toml')
+    )),
+    outputs(
+      j('out', 'linux_x86_64', 'desktop-cli'),
+      j('out', 'linux_aarch64', 'desktop-cli'),
+      j('out', 'win64', 'desktop-cli.exe'),
+    ),
+    lambda: within(
+      j('app-subprograms', 'desktop-cli'),
+      # Build standalone cli exe shell
+      lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'x86_64-pc-windows-gnu') if build_win64 else None,
+      lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'x86_64-unknown-linux-gnu') if build_linux_x86_64 else None,
+      lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'aarch64-unknown-linux-gnu') if build_linux_aarch64 else None,
+    ),
+    lambda: assemble_in_win64(
+      j('app-subprograms', 'desktop-cli', 'target', 'x86_64-pc-windows-gnu', 'release', 'desktop-cli.exe'),
+      'desktop-cli.exe'
+    ),
+    lambda: assemble_in_linux_x86_64(
+      j('app-subprograms', 'desktop-cli', 'target', 'x86_64-unknown-linux-gnu', 'release', 'desktop-cli'),
+      'desktop-cli'
+    ),
+    lambda: assemble_in_linux_aarch64(
+      j('app-subprograms', 'desktop-cli', 'target', 'aarch64-unknown-linux-gnu', 'release', 'desktop-cli'),
+      'desktop-cli'
+    ),
+  )
 
 
   silenced_task(
@@ -372,6 +372,9 @@ def create_selfsigned_ssl_certs():
 def build_www(build_win64, build_linux_x86_64, build_linux_aarch64, build_android, open_browser):
   print('Building www/ directory...')
   
+  if not e(j('out', 'www')):
+    os.makedirs(j('out', 'www'))
+  
   if build_win64:
     if get_newest_file_mtime(j('out', 'win64')) > get_newest_file_mtime(j('out', 'www', 'win64.zip')):
       shutil.make_archive(j('out', 'www', 'win64'), 'zip', j('out', 'win64'))
@@ -389,97 +392,9 @@ def build_www(build_win64, build_linux_x86_64, build_linux_aarch64, build_androi
       assemble_in_www(j('out', 'android', 'loci.apk'), 'loci.apk')
 
   # Finally presentation graphics
-  if not e(j('out', 'www')):
-    os.makedirs(j('out', 'www'))
   cp(j('misc-res', 'windows_icon.png'), j('out', 'www', 'windows_icon.png'))
   cp(j('misc-res', 'linux_icon.png'),   j('out', 'www', 'linux_icon.png'))
   cp(j('misc-res', 'android_icon.png'), j('out', 'www', 'android_icon.png'))
 
-  www_index_f = j('out', 'www', 'index.html')
-  with open(www_index_f, 'w') as fd:
-    fd.write("""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <title>Loci</title>
-  <style>
-/* https://www.colourlovers.com/palette/118332/earth_tones */
-html, body {
-  background-color: #263D14;
-  color: #888536;
-  max-width: 720px;
-  line-height: 1.35;
-}
-a.dl {
-  color: inherit;
-  text-decoration: inherit;
-  font-size: 1.74em;
-  padding: 32pt 12pt;
-  padding-left: 122pt;
-  margin: 8pt 16pt;
-  border: 8pt solid #4D4B17;
-  background-color: #4D4B17;
-  border-radius: 6pt;
-  display: inline-block;
-  background-repeat: no-repeat;
-  background-position: left;
-  background-size: contain;
-  background-origin: padding-box;
-  transition: transform .2s;
-}
-a.dl:hover {
-  transform: scale(1.06);
-}
-a.win {
-  background-image: url("windows_icon.png");
-  background-color: #064780;
-  border-color: #064780;
-}
-a.linux {
-  background-image: url("linux_icon.png");
-  background-color: #4D4B17;
-  border-color: #4D4B17;
-}
-a.android {
-  background-image: url("android_icon.png");
-  background-color: #72250F;
-  border-color: #72250F;
-}
-  </style>
-</head>
-<body>
-    <h1>Loci</h1>
-    <p>
-      Aenean lacinia odio purus, quis vulputate enim ornare non.
-      Aliquam gravida purus velit, ac venenatis ipsum suscipit scelerisque.
-      Phasellus eget mi ornare, molestie nibh sit amet, accumsan mauris.
-      Donec et nisi libero.
-      Integer ac libero efficitur, accumsan lacus vel, ultrices quam.
-      Quisque blandit elit nulla, et ornare libero congue at.
-      Nulla cursus finibus rhoncus.
-      Nam blandit libero vitae tortor sodales, at pharetra lorem elementum.
-      Mauris magna eros, convallis in dictum ut, sagittis nec sapien.
-      Aenean quis tempor odio, vitae rhoncus risus.
-      Mauris sit amet blandit massa, a tempor tellus.
-      Vivamus id fermentum odio, aliquet ultricies tellus.
-      Nulla vitae libero eu tortor hendrerit fringilla id a justo.
-      Praesent a lacus dui. 
-    </p>
-    
-    <h1>Downloads</h1>
-    <a class="dl win" href="win64.zip">Windows 64-bit</a><br>
-    <a class="dl linux" href="linux_x86_64.tar.gz">Linux 64-bit</a><br>
-    <a class="dl linux" href="linux_aarch64.tar.gz">Linux aarch64</a><br>
-    <a class="dl android" href="loci.apk">Android</a><br>
-
-    <h1>Screenshots</h1>
-    <!-- // TODO capture screenshots and store in misc-res/ -->
-
-</body>
-</html>
-""".strip())
-
-  if open_browser:
-    webbrowser.open(www_index_f)
-
+  # Instead of building index.html, we let webpage_update_tool.py do that.
+  # This task only assembles distributable archives (.zip, .tar.gz, and .apk files)

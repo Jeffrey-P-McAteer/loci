@@ -116,3 +116,14 @@ desktop programs build under `./out/<host target>/`
 `feature_tracking_tool.py` reads "features.json" in all subprograms and lets you filter the feature report.
 
 
+# Misc oneliners
+
+Common things used during development but not important enough to factor into a script someplace:
+
+```bash
+# Build for host, override builtin www/ with src www, and only run server-side functions for debugging UI in a browser.
+LOCI_WWW_OVERRIDE=$PWD/app-subprograms/server-webgui/www/ RUN_WITHOUT_GUI=1 python -m btool hostonly cleanrun
+
+
+```
+
