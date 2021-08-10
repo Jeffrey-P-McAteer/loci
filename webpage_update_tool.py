@@ -260,6 +260,8 @@ def gen_kpi_graphs(repo_root):
 
   # Offset in points for all graphs, to right and up of points
   xytext = (6.0, -16.0)
+  # KPI chart width/height in pixels
+  kpi_wh = (640*2, 480*2)
 
   # We may assume build_data is initialized
   
@@ -267,6 +269,7 @@ def gen_kpi_graphs(repo_root):
   full_build_times_y = [x.get('full_build_duration_s', 0) for x in build_data['raw_build_times']]
 
   fig, ax = matplotlib.pyplot.subplots()
+  fig.set_size_inches((kpi_wh[0] / fig.get_dpi(), kpi_wh[1] / fig.get_dpi()))
   ax.plot_date(full_build_times_x, full_build_times_y, linestyle='solid', color='#17517e')
   if len(full_build_times_x) > 12:
     build_times_mod = 4
@@ -296,6 +299,7 @@ def gen_kpi_graphs(repo_root):
   delta_build_times_y = [x.get('delta_build_duration_s', 0) for x in build_data['raw_build_times']]
 
   fig, ax = matplotlib.pyplot.subplots()
+  fig.set_size_inches((kpi_wh[0] / fig.get_dpi(), kpi_wh[1] / fig.get_dpi()))
   ax.plot_date(delta_build_times_x, delta_build_times_y, linestyle='solid', color='#17517e')
   i = 0
   for x1, y1 in zip(delta_build_times_x, delta_build_times_y):
@@ -319,6 +323,7 @@ def gen_kpi_graphs(repo_root):
   build_size_y_android = [x.get('android_size', 0) / (1024*1024) for x in build_data['build_size']]
 
   fig, ax = matplotlib.pyplot.subplots(sharey=True)
+  fig.set_size_inches((kpi_wh[0] / fig.get_dpi(), kpi_wh[1] / fig.get_dpi()))
   ax.plot_date(build_size_x, build_size_y_win64, linestyle='solid', label='Windows x86_64', color='#17517e')
   ax.plot_date(build_size_x, build_size_y_linux_x86_64, linestyle='solid', label='Linux x86_64', color='#078451')
   ax.plot_date(build_size_x, build_size_y_linux_aarch64, linestyle='solid', label='Linux aarch64', color='#FAD5A5')
@@ -348,6 +353,7 @@ def gen_kpi_graphs(repo_root):
   unit_tests_y_failed = [x.get('failed', 0) for x in build_data['unit_tests']]
 
   fig, ax = matplotlib.pyplot.subplots(sharey=True)
+  fig.set_size_inches((kpi_wh[0] / fig.get_dpi(), kpi_wh[1] / fig.get_dpi()))
   ax.plot_date(unit_tests_x, unit_tests_y_total, linestyle='solid', label='Total Tests', color='#17517e')
   ax.plot_date(unit_tests_x, unit_tests_y_passed, linestyle='solid', label='Passed', color='#078451')
   ax.plot_date(unit_tests_x, unit_tests_y_failed, linestyle='solid', label='Failed', color='#FF3D00')
@@ -375,6 +381,7 @@ def gen_kpi_graphs(repo_root):
   features_y_not_yet_started = [x.get('not_yet_started', 0) for x in build_data['features']]
 
   fig, ax = matplotlib.pyplot.subplots(sharey=True)
+  fig.set_size_inches((kpi_wh[0] / fig.get_dpi(), kpi_wh[1] / fig.get_dpi()))
   ax.plot_date(features_x, features_y_total, linestyle='solid', label='Total Features', color='#17517e')
   ax.plot_date(features_x, features_y_in_progress, linestyle='solid', label='In Progress', color='#078451')
   ax.plot_date(features_x, features_y_not_yet_started, linestyle='solid', label='Not Yet Started', color='#FF3D00')
@@ -403,6 +410,7 @@ def gen_kpi_graphs(repo_root):
   sloc_y_app_code = [x.get('app_code', 0) for x in build_data['sloc']]
 
   fig, ax = matplotlib.pyplot.subplots(sharey=True)
+  fig.set_size_inches((kpi_wh[0] / fig.get_dpi(), kpi_wh[1] / fig.get_dpi()))
   ax.plot_date(sloc_x, sloc_y_total, linestyle='solid', label='Total', color='#FA3820')
   ax.plot_date(sloc_x, sloc_y_build_code, linestyle='solid', label='Build System', color='#1474FA')
   ax.plot_date(sloc_x, sloc_y_config_code, linestyle='solid', label='Configuration', color='#22FA23')
