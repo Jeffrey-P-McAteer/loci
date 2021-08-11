@@ -150,7 +150,7 @@ class app_lib {
     }
     else {
       sortedChildren = [].slice.call(children);
-      sortedChildren.sort(c => parseInt(c.getAttribute('weight') || default_weight, 10));
+      sortedChildren.sort(c => -1 * parseInt(c.getAttribute('weight') || default_weight, 10));
     }
     // Remove children
     while (parent_elm.firstChild) {
