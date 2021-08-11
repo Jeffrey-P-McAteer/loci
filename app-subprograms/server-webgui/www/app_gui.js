@@ -64,7 +64,8 @@ function app_gui_init_sm() {
     subMenusSubOffsetX: 1,
     subMenusSubOffsetY: -8,
     subIndicators: false,
-
+    keepInViewport: false,
+    
   });
 }
 
