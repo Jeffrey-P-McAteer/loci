@@ -12,6 +12,9 @@
  */
 class app_lib {
   static app_base_url = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+  // if browser sorts [1,4,2,3] => [1,2,3,4] this is false,
+  //    else if sorts [1,4,2,3] => [4,3,2,1] this is true.
+  static client_sorts_left_right = undefined;
   static ws = null;
   
   static connect_to_server() {
@@ -20,6 +23,21 @@ class app_lib {
       app_lib.ws.onopen = app_lib.ws_onopen;
       app_lib.ws.onmessage = app_lib.ws_onmessage;
     }
+  }
+
+  static sorts_left_right() {
+    if (app_lib.client_sorts_left_right === undefined) {
+      var nums = [1,4,2,3];
+      nums.sort(c => c);
+      // Thie browser sorts large -> small
+      if (nums[0] > nums[1]) {
+        app_lib.client_sorts_left_right = true;
+      }
+      else {
+        app_lib.client_sorts_left_right = false;
+      }
+    }
+    return app_lib.client_sorts_left_right;
   }
 
   static ws_onopen() {
@@ -142,20 +160,19 @@ class app_lib {
     
     var children = parent_elm.children;
     // Sort children (browser-specific because of dumb sort rules)
-    var sortedChildren = [];
-    if (navigator.userAgent.indexOf("Firefox") > 0) {
-      sortedChildren = [].slice.call(children).sort(function (a, b) {
-          return parseInt(a.getAttribute('weight') || default_weight, 10) > parseInt(b.getAttribute('weight') || default_weight, 10) ? 1 : -1;
-      });
-    }
-    else {
-      sortedChildren = [].slice.call(children);
+    var sortedChildren = [].slice.call(children);
+    if (app_lib.sorts_left_right()) {
       sortedChildren.sort(c => -1 * parseInt(c.getAttribute('weight') || default_weight, 10));
     }
+    else {
+      sortedChildren.sort(c => parseInt(c.getAttribute('weight') || default_weight, 10));
+    }
+
     // Remove children
     while (parent_elm.firstChild) {
       parent_elm.removeChild(parent_elm.lastChild);
     }
+    
     // Add in sorted order
     sortedChildren.forEach(function (p) {
         parent_elm.appendChild(p);
