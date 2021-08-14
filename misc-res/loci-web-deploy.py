@@ -33,9 +33,16 @@ def main(args=sys.argv):
     print('Remove /tmp/.last_build_hash to force a run.')
     return
 
+  # Record which version is getting published
+  try:
+    with open('/tmp/.last_build_hash', 'w') as fd:
+      fd.write(current_build_hash)
+  except Exception as e:
+    print(e)
+
 
   # Ensures 3rdparty packages exist
-  subprocess.run([sys.executable, '-m', 'python_packages'], check=True)
+  cmd(sys.executable, '-m', 'python_packages')
 
   # Build all targets
   cmd(sys.executable, '-m', 'btool')
@@ -44,12 +51,6 @@ def main(args=sys.argv):
   cmd(sys.executable, '-m', 'webpage_update_tool', 'direct_folder', '/usr/share/nginx/html/')
 
 
-  # Finally record which version got written up
-  try:
-    with open('/tmp/.last_build_hash', 'w') as fd:
-      fd.write(current_build_hash)
-  except Exception as e:
-    print(e)
   
 
 
