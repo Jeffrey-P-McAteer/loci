@@ -19,7 +19,10 @@ Description=Pulls and builds loci from github
 [Service]
 User=root
 Group=nobody
-# Type=simple
+CPUWeight=20
+CPUQuota=94%
+IOWeight=20
+MemorySwapMax=0
 Type=oneshot
 Environment="REPO_URL=https://GIT_AUTH_TOKEN@github.com/Jeffrey-P-McAteer/loci.git"
 Environment="REPO_CWD=/opt/loci"
