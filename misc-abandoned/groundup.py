@@ -32,6 +32,11 @@ import signal
 import traceback
 import shutil
 import tempfile
+import codecs
+
+sys.path.append(
+  os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+)
 
 # Our own tools
 import btool
@@ -183,6 +188,12 @@ def download_windows_vm():
 
       # Now we have partitions as nbd_device+'p1' etc.
       windows_fat32_part = nbd_device+'p1'
+
+      seconds_to_wait = 15.0
+      while seconds_to_wait > 0.0 and not os.path.exists(windows_fat32_part):
+        seconds_to_wait -= 0.1
+        time.sleep(0.1)
+
       subprocess.run(['sudo', 'ntfsfix', '--clear-dirty', windows_fat32_part], check=True)
       win_c_mount_dir = tempfile.mkdtemp()
       subprocess.run(['sudo', 'mount', '-o', 'rw', windows_fat32_part, win_c_mount_dir], check=True)
@@ -216,8 +227,9 @@ Stop-Service sshd
         subprocess.run(['sudo', 'cp', path_ps1, os.path.join(windows_startup_dir, 'vmsetup.ps1')], check=True)
         subprocess.run(['sudo', 'chmod', '+x', os.path.join(windows_startup_dir, 'vmsetup.ps1')], check=True)
 
-        with os.fdopen(fd_ini, 'w') as tmp:
+        with os.fdopen(fd_ini, 'wb') as tmp:
           # Add PS to deploy OpenSSHD (https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)
+          tmp.write(codecs.BOM_UTF16_LE)
           tmp.write('''
 [ScriptsConfig]
 StartExecutePSFirst=true
@@ -227,11 +239,11 @@ EndExecutePSFirst=true
 0CmdLine=C:\\Windows\\System32\\GroupPolicy\\Machine\\Scripts\\Startup\\vmsetup.ps1
 0Parameters=
 
-''')
+'''.encode('utf-16-le'))
 
         # Documentation is unclear, create both psscripts.ini and scripts.ini
-        subprocess.run(['sudo', 'cp', path_ini, os.path.join(windows_startup_dir, 'psscripts.ini')], check=True)
-        subprocess.run(['sudo', 'cp', path_ini, os.path.join(windows_startup_dir, 'scripts.ini')], check=True)
+        subprocess.run(['sudo', 'cp', path_ini, os.path.join(windows_startup_dir, 'psScripts.ini')], check=True)
+        #subprocess.run(['sudo', 'cp', path_ini, os.path.join(windows_startup_dir, 'scripts.ini')], check=True)
 
       finally:
         subprocess.run(['sync'])
