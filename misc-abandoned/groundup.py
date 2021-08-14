@@ -229,6 +229,7 @@ def download_windows_vm():
         time.sleep(0.1)
 
       subprocess.run(['sudo', 'ntfsfix', '--clear-dirty', windows_fat32_part], check=True)
+      subprocess.run(['sudo', 'ntfsfix', windows_fat32_part], check=True)
       win_c_mount_dir = tempfile.mkdtemp()
       win_c_registry_dir = tempfile.mkdtemp()
       subprocess.run(['sudo', 'mount', '-o', 'rw', windows_fat32_part, win_c_mount_dir], check=True)
@@ -300,7 +301,7 @@ EndExecutePSFirst=true
         target_ps1 = 'C:\\Windows\\System32\\GroupPolicy\\Machine\\Scripts\\Startup\\vmsetup.ps1'
         # target_ps1 = target_ps1.replace('\\', '\\\\') # double-escape b/s shell used below to write
         
-        root_cmd = f'echo \'%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File "{target_ps1}"\' > {bootup_run_vmsetup}'
+        root_cmd = f'echo \'%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File "{target_ps1}"\' > \'{bootup_run_vmsetup}\''
         
         print('Running: {}'.format(root_cmd))
         
