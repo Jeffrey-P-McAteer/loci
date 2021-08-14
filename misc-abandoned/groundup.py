@@ -72,6 +72,16 @@ def is_linux():
   return 'linux' in sys.platform.lower()
 
 
+def get_repo_root():
+  start_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+  repo_top_file = '.git'
+  max_jumps = 6
+  while not os.path.exists(os.path.join(start_dir, repo_top_file)) and max_jumps > 0:
+    start_dir = os.path.abspath(os.path.join(start_dir, '..'))
+    max_jumps -= 1
+  return start_dir
+
+
 def json_key_search(json_input, lookup_key):
     if isinstance(json_input, dict):
         for k, v in json_input.items():
@@ -119,6 +129,24 @@ def next_free_nbd():
   while os.path.exists(ith(i)+'p1'):
     i += 1
   return ith(i)
+
+
+def setup_winregfs():
+  winregfs_dir = os.path.join(get_repo_root(), 'build', 'linux-winregfs')
+  if not os.path.exists(os.path.join(get_repo_root(), 'build')):
+    os.makedirs(os.path.join(get_repo_root(), 'build'))
+  if not os.path.exists(winregfs_dir):
+    subprocess.run([
+      'git', 'clone', '--depth', '1', 'https://github.com/jbruchon/winregfs.git', winregfs_dir 
+    ], check=True)
+
+  if not os.path.exists(os.path.join(winregfs_dir, 'mount.winregfs')):
+    subprocess.run([
+      'make'
+    ], check=True, cwd=winregfs_dir)
+
+  os.environ['PATH'] = winregfs_dir +  os.pathsep + os.environ['PATH']
+
 
 def download_windows_vm():
   global windows_x86_64_qcow2
@@ -178,6 +206,12 @@ def download_windows_vm():
   vm_image_modification_flag = os.path.join(VM_IMAGES_DIR, 'MSEdgeWin_qcow2_altered.txt')
   if not os.path.exists(vm_image_modification_flag):
     if is_linux():
+
+      subprocess.run([
+        'sudo', 'pkill', 'qemu-nbd'
+      ], check=False)
+      time.sleep(0.2)
+
       # Resize .qcow2 to be dynamic supporting up to 128gb
       subprocess.run(['qemu-img', 'resize', windows_x86_64_qcow2, '128G'], check=True)
 
@@ -196,6 +230,7 @@ def download_windows_vm():
 
       subprocess.run(['sudo', 'ntfsfix', '--clear-dirty', windows_fat32_part], check=True)
       win_c_mount_dir = tempfile.mkdtemp()
+      win_c_registry_dir = tempfile.mkdtemp()
       subprocess.run(['sudo', 'mount', '-o', 'rw', windows_fat32_part, win_c_mount_dir], check=True)
       print('Mounted C:\\ to {}'.format(win_c_mount_dir))
 
@@ -243,10 +278,49 @@ EndExecutePSFirst=true
 
         # Documentation is unclear, create both psscripts.ini and scripts.ini
         subprocess.run(['sudo', 'cp', path_ini, os.path.join(windows_startup_dir, 'psScripts.ini')], check=True)
-        #subprocess.run(['sudo', 'cp', path_ini, os.path.join(windows_startup_dir, 'scripts.ini')], check=True)
+        
+        # We know the above .ini file never ends up getting the vmsetup.ps1 script to execute,
+        # so we also add a registry key that ought to do the trick.
+
+        setup_winregfs()
+
+        subprocess.run([
+          'sudo', 'mount.winregfs',
+            os.path.join(win_c_mount_dir, 'Windows', 'System32', 'config', 'SOFTWARE'),
+            win_c_registry_dir,
+        ], check=True)
+
+        print('Mounted registry under {}'.format(win_c_registry_dir))
+
+        # Now we can read+write to win_c_registry_dir files and be sure their changes will show up in the VM
+        bootup_run_d = os.path.join(win_c_registry_dir, 'Microsoft', 'Windows', 'CurrentVersion', 'Run')
+
+        bootup_run_vmsetup = os.path.join(bootup_run_d, 'VMSetup.sz')
+
+        target_ps1 = 'C:\\Windows\\System32\\GroupPolicy\\Machine\\Scripts\\Startup\\vmsetup.ps1'
+        # target_ps1 = target_ps1.replace('\\', '\\\\') # double-escape b/s shell used below to write
+        
+        root_cmd = f'echo \'%SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File "{target_ps1}"\' > {bootup_run_vmsetup}'
+        
+        print('Running: {}'.format(root_cmd))
+        
+        subprocess.run([
+          'sudo', 'sh', '-c', root_cmd,
+        ], check=True)
+
+#         with open(bootup_run_vmsetup, 'w') as fd:
+#           fd.write(f'''
+# %SystemRoot%\\system32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File "{target_ps1}"
+# '''.strip())
+
 
       finally:
+        if 'DEBUG' in os.environ:
+          print('Spawning bash b/c DEBUG=1 set')
+          subprocess.run(['bash'])
+
         subprocess.run(['sync'])
+        subprocess.run(['sudo', 'umount', win_c_registry_dir], check=True)
         subprocess.run(['sudo', 'umount', windows_fat32_part], check=True)
         os.remove(path_ps1)
         os.remove(path_ini)
@@ -255,6 +329,8 @@ EndExecutePSFirst=true
       # find /dev -maxdepth 1 -iname 'nbd*' -print -exec sudo qemu-nbd --disconnect {} \;
 
       os.rmdir(win_c_mount_dir)
+
+      os.rmdir(win_c_registry_dir)
       
     else:
       raise Exception('Cannot modify VM .qcow2 using windows system, no implemented way to mount and write to VM hdd.')
@@ -299,7 +375,7 @@ def boot_windows_vm():
       '-drive', f'format=qcow2,file={windows_x86_64_qcow2}',
       '-enable-kvm' if is_linux() else None,
       '-smp', '4', '-cpu', 'host', '-m', '8056',
-      '-net', 'nic', '-net', 'user,hostfwd=tcp::10022-:22,smb={}'.format(os.path.abspath('.')),
+      '-net', 'nic', '-net', 'user,hostfwd=tcp::10022-:22,smb={}'.format(get_repo_root()),
       # Mount within VM: \\10.0.2.4\qemu\, ssh to IEUser@localhost:10022
       '-chardev', 'socket,path=/tmp/qga.sock,server=on,wait=off,id=qga0',
       '-device', 'virtio-serial',
