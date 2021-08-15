@@ -251,3 +251,19 @@ pub fn trans_lang(lang_code: &str, tkey: &str) -> String {
 
 
 
+
+
+
+// Helper function to return a comma-separated sequence of `?`.
+// - `repeat_vars(0) => panic!(...)`
+// - `repeat_vars(1) => "?"`
+// - `repeat_vars(2) => "?,?"`
+// - `repeat_vars(3) => "?,?,?"`
+// - ...
+pub fn util_repeat_sql_vars(count: usize) -> String {
+    let mut s = "?,".repeat(count);
+    // Remove trailing comma
+    s.pop();
+    s
+}
+

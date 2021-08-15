@@ -5,7 +5,8 @@
 -- they depend on is running.
 
 CREATE TABLE IF NOT EXISTS processes (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
   exe_file TEXT NOT NULL,
   pid TEXT UNIQUE NOT NULL
 );
@@ -18,7 +19,8 @@ CREATE TABLE IF NOT EXISTS processes (
 -- without being attached as a child.
 
 CREATE TABLE IF NOT EXISTS launch_req (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
   exe_file TEXT NOT NULL,
   cwd TEXT,          -- Working directory, defaults to app_root
   json_env TEXT,     -- eg {"DISPLAY": ":5"}
@@ -30,7 +32,8 @@ CREATE TABLE IF NOT EXISTS launch_req (
 -- The app-lib functions get_prop() and set_prop() read and write to this table.
 
 CREATE TABLE IF NOT EXISTS properties (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
   key TEXT UNIQUE NOT NULL,
   value TEXT NOT NULL
 );

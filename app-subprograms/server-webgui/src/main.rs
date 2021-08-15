@@ -14,13 +14,22 @@ use std::path::Path;
 use std::net::IpAddr;
 use std::str::FromStr;
 
+use std::sync::atomic::{Ordering,AtomicBool};
+
+
 #[derive(RustEmbed)]
 #[folder = "www"]
 struct WWWData;
 
+// Globals
+static exit_flag: AtomicBool = AtomicBool::new(false);
+
 #[cfg(not(tarpaulin_include))]
 #[tokio::main(worker_threads = 2)]
 async fn main() {
+    exit_flag.store(false, Ordering::Relaxed);
+
+    std::thread::spawn(|| { db_poll_t(); });
 
     let routes = warp::path("ws")
         .and(warp::ws()) // The `ws()` filter will prepare the Websocket handshake.
@@ -132,7 +141,65 @@ async fn on_ws_msg<'a>(msg_txt: &str, tx: &'a mut SplitSink<WebSocket, Message>)
     Ok(())
 }
 
+/**
+ * Exits when >400 errors occur in db_poll_t_e OR exit_flag is set to true.
+ */
+fn db_poll_t() {
+    let mut max_failures = 400;
+    loop {
+        if max_failures < 1 {
+            break;
+        }
+        if let Err(e) = db_poll_t_e() {
+            eprintln!("server-webgui {}:{} {}", file!(), line!(), e);
+            max_failures -= 1;
+            std::thread::sleep(std::time::Duration::from_millis(500));
+        }
 
+        if exit_flag.load(Ordering::Relaxed) {
+          break;
+        }
+    }
+}
+
+fn db_poll_t_e() -> Result<(), Box<dyn std::error::Error>> {
+    let mut gui_db = app_lib::open_app_db("gui")?; // see gui.sql
+    loop {
+        std::thread::sleep(std::time::Duration::from_millis(350));
+        
+        if exit_flag.load(Ordering::Relaxed) {
+          break;
+        }
+
+        // for all rows in js_push table...
+        let mut stmt = gui_db.prepare(
+            "SELECT js_push.rowid, js_push.client_js, sessions.ip_addr_and_nonce FROM js_push JOIN sessions ON js_push.session_id = sessions.rowid"
+        )?;
+        let mut rows = stmt.query([])?;
+        
+        let mut processed_row_ids: Vec<isize> = vec![];
+
+        while let Some(row) = rows.next()? {
+            let js_push_rowid: isize = row.get(0)?;
+            let client_js: String = row.get(1)?;
+            let ip_addr_and_nonce: String = row.get(2)?;
+            
+            println!("TODO client_js={}   ip_addr_and_nonce={}", client_js, ip_addr_and_nonce);
+
+            processed_row_ids.push(js_push_rowid);
+
+        }
+
+        if processed_row_ids.len() > 0 {
+            let sql = format!("DELETE FROM js_push WHERE rowid NOT IN ({})", app_lib::util_repeat_sql_vars(processed_row_ids.len()) );
+            let parameters = app_lib::rusqlite::params_from_iter(processed_row_ids.iter());
+            gui_db.execute(&sql, parameters)?;
+        }
+
+    }
+
+    Ok(())
+}
 
 
 

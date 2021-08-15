@@ -5,7 +5,8 @@
 -- causing a cascade removal of entries from the remaining gui tables.
 
 CREATE TABLE IF NOT EXISTS sessions (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
   
   -- This is the address & a unique number used to identify clients.
   -- Nonce begins as the client-side port of the websocket which GUI JS code uses
@@ -24,7 +25,8 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- menu items at the top of the GUI.
 
 CREATE TABLE IF NOT EXISTS menu (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Used to differentiate between menus in a browser and menus in a desktop window
   session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
@@ -48,7 +50,8 @@ CREATE TABLE IF NOT EXISTS menu (
 -- in the upper-right corner of the app.
 
 CREATE TABLE IF NOT EXISTS status_texts (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Used to differentiate between menus in a browser and menus in a desktop window
   session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
@@ -70,7 +73,8 @@ CREATE TABLE IF NOT EXISTS status_texts (
 -- at the left of the GUI.
 
 CREATE TABLE IF NOT EXISTS left_tabs (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Used to differentiate between left tab in a browser and left tabs in a desktop window
   session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
@@ -98,7 +102,8 @@ CREATE TABLE IF NOT EXISTS left_tabs (
 -- at the right of the GUI.
 
 CREATE TABLE IF NOT EXISTS right_tabs (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Differentiates right tabs across multiple browser windows
   session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
@@ -126,7 +131,8 @@ CREATE TABLE IF NOT EXISTS right_tabs (
 -- of the GUI.
 
 CREATE TABLE IF NOT EXISTS action_buttons (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Differentiates action buttons on different browser sessions
   session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
@@ -153,7 +159,8 @@ CREATE TABLE IF NOT EXISTS action_buttons (
 -- and they may POSSIBLY also be sent to the OS via a native notification API (phones & browsers provide these)
 
 CREATE TABLE IF NOT EXISTS notifications (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Differentiates which browser session gets the notification
   session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
@@ -176,6 +183,23 @@ CREATE TABLE IF NOT EXISTS notifications (
   -- When not null, this is added as the 'style="css"' property of the notification element.
   -- This may be used to change the background color or set an image for the notification.
   css TEXT
+);
+
+
+-- The "js_push" table is written to by subprograms
+-- and read by server-webgui to execute arbitrary javascript in the GUI.
+-- Expect a latency of 500ms between writing here and executing on the client.
+
+CREATE TABLE IF NOT EXISTS js_push (
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
+
+  -- Differentiates which browser session gets the JS code
+  session_id INTEGER NOT NULL REFERENCES sessions(rowid) ON DELETE CASCADE,
+
+  -- JS executed on the client
+  client_js TEXT NOT NULL
+  
 );
 
 

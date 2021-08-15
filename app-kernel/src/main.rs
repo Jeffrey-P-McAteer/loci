@@ -651,28 +651,13 @@ fn reap_unknown_children(system_db: &app_lib::rusqlite::Connection, good_pids: &
     return Ok(());
   }
 
-  let sql = format!("DELETE FROM processes WHERE pid NOT IN ({})", repeat_vars(good_pids.len()) );
+  let sql = format!("DELETE FROM processes WHERE pid NOT IN ({})", app_lib::util_repeat_sql_vars(good_pids.len()) );
   let parameters = app_lib::rusqlite::params_from_iter(good_pids.iter());
 
   system_db.execute(&sql, parameters)?;
 
   Ok(())
 }
-
-
-// Helper function to return a comma-separated sequence of `?`.
-// - `repeat_vars(0) => panic!(...)`
-// - `repeat_vars(1) => "?"`
-// - `repeat_vars(2) => "?,?"`
-// - `repeat_vars(3) => "?,?,?"`
-// - ...
-fn repeat_vars(count: usize) -> String {
-    let mut s = "?,".repeat(count);
-    // Remove trailing comma
-    s.pop();
-    s
-}
-
 
 
 

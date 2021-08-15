@@ -11,7 +11,7 @@ fn main() {
     Ok(())
   });
 
-  shell.new_command("sql", "Execute a sql statement, printing any returned rows + columns.", 2, |io, _, args| {
+  shell.new_command("sql-exec", "Execute a sql statement, no data is returned on success.", 2, |io, _, args| {
     //writeln!(io, "args = {:#?}", args )?;
     let dbname = args[0];
     let sql = args[1..].join(" ");
@@ -21,7 +21,41 @@ fn main() {
     writeln!(io, "Executing: {}", &sql )?;
     let res = db.execute_batch(&sql)?;
 
-    writeln!(io, "res={:#?}", res )?;
+    //writeln!(io, "res={:#?}", res )?;
+
+    Ok(())
+  });
+
+  shell.new_command("sql-query", "Execute a sql query, printing any returned rows + columns.", 2, |io, _, args| {
+    //writeln!(io, "args = {:#?}", args )?;
+    let dbname = args[0];
+    let sql = args[1..].join(" ");
+
+    writeln!(io, "Opening db {} from file {}", &dbname, &app_lib::get_app_db_path(&dbname).to_string_lossy() )?;
+    let mut db = app_lib::open_app_db(&dbname)?;
+    writeln!(io, "Querying: {}", &sql )?;
+    let mut stmt = db.prepare(&sql)?;
+    let mut rows = stmt.query([])?;
+    let mut rows_count = 0;
+
+    while let Some(row) = rows.next()? {
+      for i in 0..row.column_count() {
+        // then print value
+        if let Ok(val) = row.get(i) {
+          let val: String = val;
+          write!(io, "{:#?}, ", val)?;
+        }
+        else if let Ok(val) = row.get(i) {
+          let val: i64 = val;
+          write!(io, "{:#?}, ", val)?;
+        }
+        else {
+          write!(io, "UNKNOWN VAL, ")?;
+        }
+      }
+      writeln!(io, "" )?;
+    }
+    writeln!(io, "Query returned {} rows", rows_count )?;
 
     Ok(())
   });

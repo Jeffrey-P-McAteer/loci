@@ -6,7 +6,8 @@
 -- from the app-data-tkeys/ directory.
 
 CREATE TABLE IF NOT EXISTS tkeys (
-  rowid INTEGER PRIMARY KEY,
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
 
   -- Unique key used by subprograms to request a phrase; NO WHITESPACE ALLOWED!
   tkey TEXT UNIQUE NOT NULL check(instr(tkey, ' ') == 0)
@@ -19,7 +20,8 @@ CREATE TABLE IF NOT EXISTS tkeys (
 -- from the app-data-tkeys/ directory.
 
 CREATE TABLE IF NOT EXISTS translations (
-  -- Implicit "rowid" column
+  -- Must re-declare rowid to be used in foreign key constraints
+  rowid INTEGER NOT NULL PRIMARY KEY,
   -- Reference to a unique tkeys row
   tkey INTEGER NOT NULL REFERENCES tkeys(rowid) ON DELETE CASCADE,
   -- Language code, eg "en" or "es" for english or spanish
