@@ -12,6 +12,7 @@ use std::env;
 use std::collections::HashMap;
 use std::path::Path;
 use std::net::IpAddr;
+use std::net::SocketAddr;
 use std::str::FromStr;
 
 use std::sync::atomic::{Ordering,AtomicBool};
@@ -33,10 +34,11 @@ async fn main() {
 
     let routes = warp::path("ws")
         .and(warp::ws()) // The `ws()` filter will prepare the Websocket handshake.
-        .map(|ws: Ws| {
-            ws.on_upgrade(|websocket| { // When the client upgrades, forward to websocket_handler for business logic
+        .and(warp::addr::remote()) // This gives us IP information about the client
+        .map(|ws: Ws, remote_addr: Option<SocketAddr>| {
+            ws.on_upgrade(move |websocket| { // When the client upgrades, forward to websocket_handler for business logic
                 let (tx, rx) = websocket.split();
-                websocket_handler(tx, rx)
+                websocket_handler(remote_addr, tx, rx)
             })
         })
         // If not /ws serve a function providing a REST API
@@ -52,9 +54,7 @@ async fn main() {
         // Allow devs to override embedded www/ data at runtime
         .or(warp::fs::dir( env::var("LOCI_WWW_OVERRIDE").unwrap_or("/dev/null".to_string()) ))
         // If not /ws serve embedded www/ directory
-        .or(warp_embed::embed(&WWWData))
-        // If not in www/ try to use a directory set by developers in the LOCI_WWW_FALLBACK environment variable
-        .or(warp::fs::dir( env::var("LOCI_WWW_FALLBACK").unwrap_or("/dev/null".to_string()) ));
+        .or(warp_embed::embed(&WWWData));
 
     // First async worker is HTTP, works everywhere
     let w1 = warp::serve(routes.clone()).run((IpAddr::from_str("::0").expect("Ipv6 is broken!"), 7010));
@@ -99,7 +99,12 @@ fn api_handler(
     builder.body(body).expect("Could not build api_handler body")
 }
 
-async fn websocket_handler(mut tx: SplitSink<WebSocket, Message>, mut rx: SplitStream<WebSocket>) {
+async fn websocket_handler(remote_addr: Option<SocketAddr>, mut tx: SplitSink<WebSocket, Message>, mut rx: SplitStream<WebSocket>) {
+    // On connect register in ip_addr_and_nonce in sessions table and store reference to tx
+    // in a global variable
+    println!("TODO handle remote_addr={:#?}", remote_addr);
+
+
     let mut max_empty_msgs = 900;
     loop {
         match rx.next().await {

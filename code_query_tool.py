@@ -44,7 +44,7 @@ where REGEX is a regular expression or <arg> may be any of the following:
 
 def get_regex_str(arg):
   if arg == 'list-all-env-vars':
-    return 'env[^"]*"([a-zA-Z0-9]+)"'
+    return 'env[^"]*"([a-zA-Z0-9_-]+)"'
   elif arg == 'list-all-sys-props':
     return '[gs]et_prop[^"]*"([a-zA-Z0-9_-]+)"'
   elif arg == 'todos':
@@ -52,8 +52,9 @@ def get_regex_str(arg):
   else:
     return arg
 
-def process_regex(tracked_files, regex_str, debug=False):
-  pattern = re.compile(regex_str)
+def process_regex(tracked_files, regex_str, pattern=None, debug=False):
+  if not pattern:
+    pattern = re.compile(regex_str)
 
   for tracked_file in tracked_files:
     file_is_ascii = True
@@ -90,11 +91,16 @@ def main(args=sys.argv):
   
   debug = 'CQT_DEBUG' in os.environ
 
+  if debug:
+    for f in tracked_files:
+      print('tracked file = {}'.format(f))
+
   for arg in args[1:]:
     regex_str = get_regex_str(arg)
+    pattern = re.compile(regex_str)
     if debug:
       print('regex_str={}'.format(regex_str))
-    process_regex(tracked_files, regex_str, debug=debug)
+    process_regex(tracked_files, regex_str, pattern=pattern, debug=debug)
 
 
 
