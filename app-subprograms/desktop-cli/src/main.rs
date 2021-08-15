@@ -39,6 +39,7 @@ fn main() {
     let mut rows_count = 0;
 
     while let Some(row) = rows.next()? {
+      rows_count += 1;
       for i in 0..row.column_count() {
         // then print value
         if let Ok(val) = row.get(i) {
