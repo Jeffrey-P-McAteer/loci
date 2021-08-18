@@ -253,6 +253,25 @@ def update_kpi_data(repo_root, misc_measures):
 
   save_json('kbi_build_data.json', build_data)
 
+# Stores {'graph-5': [0, 10, 20...]} mapping graph+x to list of known y values.
+# if the next orig_y1 value "overlaps" an existing one by ~14 pixels we increment it until it does not.
+avoid_overlap_y_data = {}
+def avoid_overlap_y(name, x1, orig_y1, overlap_distance=18):
+  global avoid_overlap_y_data
+
+  key = '{}-{}'.format(name, x1)
+  if not key in avoid_overlap_y_data:
+    avoid_overlap_y_data[key] = []
+
+  for v in avoid_overlap_y_data[key]:
+    while abs(orig_y1 - v) < overlap_distance:
+      # Found conflict, increment!
+      orig_y1 += 1
+
+  avoid_overlap_y_data[key].append(orig_y1)
+  
+  return orig_y1
+
 
 
 def gen_kpi_graphs(repo_root):
@@ -282,7 +301,7 @@ def gen_kpi_graphs(repo_root):
   i = 0
   for x1, y1 in zip(full_build_times_x, full_build_times_y):
     if i % build_times_mod == 0:
-      ax.annotate('{0:.1f}min'.format(y1 / 60.0), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+      ax.annotate('{0:.1f}min'.format(y1 / 60.0), xy=(x1, avoid_overlap_y("full_build_times", x1, y1)), textcoords='offset points', xytext=xytext)
     i += 1
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
@@ -304,7 +323,7 @@ def gen_kpi_graphs(repo_root):
   i = 0
   for x1, y1 in zip(delta_build_times_x, delta_build_times_y):
     if i % build_times_mod == 0:
-      ax.annotate('{0:.1f}min'.format(y1 / 60.0), xy=(x1, y1), textcoords='offset points', xytext=xytext)
+      ax.annotate('{0:.1f}min'.format(y1 / 60.0), xy=(x1, avoid_overlap_y("delta_build_times", x1, y1)), textcoords='offset points', xytext=xytext)
     i += 1
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
@@ -333,7 +352,7 @@ def gen_kpi_graphs(repo_root):
     for x1, y1 in zip(build_size_x, y_range):
       a_str = '{0:.1f}mb'.format(y1)
       if last_y1 is None or last_y1 != a_str:
-        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        ax.annotate(a_str, xy=(x1, avoid_overlap_y("build_size", x1, y1)), textcoords='offset points', xytext=xytext)
         last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
@@ -362,7 +381,7 @@ def gen_kpi_graphs(repo_root):
     for x1, y1 in zip(unit_tests_x, y_range):
       a_str = '{0}'.format(int(y1))
       if last_y1 is None or last_y1 != a_str:
-        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        ax.annotate(a_str, xy=(x1, avoid_overlap_y("unit_tests", x1, y1)), textcoords='offset points', xytext=xytext)
         last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
@@ -390,7 +409,7 @@ def gen_kpi_graphs(repo_root):
     for x1, y1 in zip(features_x, y_range):
       a_str = '{0}'.format(int(y1))
       if last_y1 is None or last_y1 != a_str:
-        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        ax.annotate(a_str, xy=(x1, avoid_overlap_y("features", x1, y1)), textcoords='offset points', xytext=xytext)
         last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
@@ -420,7 +439,7 @@ def gen_kpi_graphs(repo_root):
     for x1, y1 in zip(sloc_x, y_range):
       a_str = '{0:,}'.format(int(y1))
       if last_y1 is None or last_y1 != a_str:
-        ax.annotate(a_str, xy=(x1, y1), textcoords='offset points', xytext=xytext)
+        ax.annotate(a_str, xy=(x1, avoid_overlap_y("sloc", x1, y1)), textcoords='offset points', xytext=xytext)
         last_y1 = a_str
   ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%Y-%m-%d %H:%M"))
   ax.autoscale_view()
