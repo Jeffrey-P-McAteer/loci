@@ -259,16 +259,18 @@ avoid_overlap_y_data = {}
 def avoid_overlap_y(name, x1, orig_y1, overlap_distance=18):
   global avoid_overlap_y_data
 
-  key = '{}-{}'.format(name, x1)
-  if not key in avoid_overlap_y_data:
-    avoid_overlap_y_data[key] = []
+  # TODO consider the X case as well, but we need the entire X range to determine value overlap in percent?
 
-  for v in avoid_overlap_y_data[key]:
-    while abs(orig_y1 - v) < overlap_distance:
-      # Found conflict, increment!
-      orig_y1 += 1
+  # key = '{}-{}'.format(name, x1)
+  # if not key in avoid_overlap_y_data:
+  #   avoid_overlap_y_data[key] = []
 
-  avoid_overlap_y_data[key].append(orig_y1)
+  # for v in avoid_overlap_y_data[key]:
+  #   while abs(orig_y1 - v) < overlap_distance:
+  #     # Found conflict, increment!
+  #     orig_y1 += 1
+
+  # avoid_overlap_y_data[key].append(orig_y1)
   
   return orig_y1
 
