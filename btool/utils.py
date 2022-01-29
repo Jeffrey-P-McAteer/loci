@@ -15,15 +15,29 @@ import tempfile
 import re
 import glob
 import platform
+import pkgutil
+
+def maybe_install_w_pip(pip_package_name, import_name=None):
+  if import_name is None:
+    import_name = pip_package_name
+  pkg_l = pkgutil.find_loader(pip_package_name)
+  if not pkg_l:
+    print('WARNING: python package "{}" not found (could not import {}), attempting to install...'.format(pip_package_name, import_name))
+    cmd = [sys.executable, '-m', 'pip', 'install', '--user', pip_package_name]
+    print('Running: {}'.format(' '.join(cmd)))
+    subprocess.run(cmd, check=False)
 
 # python3 -m pip install --user requests
+maybe_install_w_pip('requests')
 import requests, zipfile, tarfile, bz2, lzma, gzip, io
 
 # Used to extract 7zip for windows libusb
 # python3 -m pip install --user py7zr
+maybe_install_w_pip('py7zr')
 import py7zr
 
 # python3 -m pip install --user Pillow
+maybe_install_w_pip('Pillow', 'PIL')
 from PIL import Image
 
 def flag_name(name):
@@ -37,6 +51,7 @@ def flag_set(name):
 
 
 def c(*cmd, check=True, cwd=None):
+  #print('cmd= {}'.format(' '.join(list(cmd))))
   c_proc = subprocess.Popen(
     list(cmd),
     cwd=cwd,

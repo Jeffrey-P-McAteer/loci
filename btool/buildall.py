@@ -328,6 +328,10 @@ def download_OSM_BPF_FILE():
     if os.path.exists(completed_file):
       print('SKIPPED (completion file exists: {})'.format(completed_file))
     else:
+      parent_dir = os.path.dirname(os.environ['OSM_BPF_FILE'])
+      if not os.path.exists(parent_dir):
+        print('Cannot download OSM BPF file to non-existent directory, please make sure "{}" exists!'.format(parent_dir))
+        return
       print('')
       start = time.time()
       c('curl',
