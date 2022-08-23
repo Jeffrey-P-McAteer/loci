@@ -112,37 +112,37 @@ def buildall(args):
 
 
   silenced_task(
-    'Building app-kernel (loci.exe)',
+    'Building app-kernel-desktop (loci.exe)',
     force_code_rebuilds_conditional_touch(inputs(
-      j('app-kernel', 'src'),
-      j('app-kernel', 'Cargo.toml'),
-      j('app-kernel', 'build.rs'),
+      j('app-kernel-desktop', 'src'),
+      j('app-kernel-desktop', 'Cargo.toml'),
+      j('app-kernel-desktop', 'build.rs'),
       j('app-data-tkeys'),
       j('app-db-schemas'),
     )),
     outputs(
-      # j('app-kernel', 'target', 'x86_64-pc-windows-gnu', 'release'),
-      # j('app-kernel', 'target', 'x86_64-unknown-linux-gnu', 'release'),
+      # j('app-kernel-desktop', 'target', 'x86_64-pc-windows-gnu', 'release'),
+      # j('app-kernel-desktop', 'target', 'x86_64-unknown-linux-gnu', 'release'),
       j('out', 'linux_x86_64', 'loci'),
       j('out', 'linux_aarch64', 'loci'),
       j('out', 'win64', 'loci.exe'),
     ),
     lambda: within(
-      j('app-kernel'),
+      j('app-kernel-desktop'),
       lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'x86_64-pc-windows-gnu') if build_win64 else None,
       lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'x86_64-unknown-linux-gnu') if build_linux_x86_64 else None,
       lambda: c('rustup', 'run', 'stable', 'cargo', 'build', '--release', '--target', 'aarch64-unknown-linux-gnu') if build_linux_aarch64 else None,
     ),
     lambda: assemble_in_win64(
-      j('app-kernel', 'target', 'x86_64-pc-windows-gnu', 'release', 'app-kernel.exe'),
+      j('app-kernel-desktop', 'target', 'x86_64-pc-windows-gnu', 'release', 'app-kernel-desktop.exe'),
       'loci.exe'
     ),
     lambda: assemble_in_linux_x86_64(
-      j('app-kernel', 'target', 'x86_64-unknown-linux-gnu', 'release', 'app-kernel'),
+      j('app-kernel-desktop', 'target', 'x86_64-unknown-linux-gnu', 'release', 'app-kernel-desktop'),
       'loci'
     ),
     lambda: assemble_in_linux_aarch64(
-      j('app-kernel', 'target', 'aarch64-unknown-linux-gnu', 'release', 'app-kernel'),
+      j('app-kernel-desktop', 'target', 'aarch64-unknown-linux-gnu', 'release', 'app-kernel-desktop'),
       'loci'
     ),
   )

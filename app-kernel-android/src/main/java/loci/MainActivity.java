@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
           return super.onConsoleMessage(consoleMessage);
         }
       });
-      wv.loadUrl("http://127.0.0.1:7010/");
+      wv.loadUrl("http://localhost:7010/");
     }
 
     private void run_webserver_t() {
@@ -58,7 +58,7 @@ public class MainActivity extends Activity {
           env.add(String.format("%s=%s", entry.getKey(), entry.getValue()));
         }
         // Add our own, read by subprograms and app-lib
-        // See app-kernel/src/main.rs set_env_vars() and keep in sync.
+        // See app-kernel-desktop/src/main.rs set_env_vars() and keep in sync.
         env.add(String.format("LOCI_DATA_DIR=%s", this.getDataDir().getAbsolutePath()));
         env.add(String.format("LOCI_INSTALL_DIR=%s", this.getDataDir().getAbsolutePath()));
 

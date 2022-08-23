@@ -98,7 +98,7 @@ def download_rust():
 
     # Windows also needs some link.exe, we use public binaries for this
     # See https://winlibs.com/
-    win_mingw_dir = j('build', 'win-base-devel-bins')
+    win_mingw_dir = j('build', 'win-base-devel-bins-x86_64')
     if not e(j(win_mingw_dir, 'bin', 'gcc.exe')):
       dl_archive_to(
         'https://github.com/brechtsanders/winlibs_mingw/releases/download/11.1.0-12.0.0-9.0.0-r1/winlibs-x86_64-posix-seh-gcc-11.1.0-llvm-12.0.0-mingw-w64-9.0.0-r1.zip',

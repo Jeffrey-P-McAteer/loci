@@ -101,7 +101,7 @@ def parse_all_features(print_warnings=True):
     expect_dir_to_have_features_json(os.path.join('app-subprograms', name))
 
   misc_expected_dirs = [
-    'app-lib', 'app-kernel', 'app-kernel-android',
+    'app-lib', 'app-kernel-desktop', 'app-kernel-android',
   ]
   for name in misc_expected_dirs:
     expect_dir_to_have_features_json(name)

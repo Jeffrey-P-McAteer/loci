@@ -97,7 +97,7 @@ Assume 64-bit x86
 `app-*/` contains code which is compiled + assempled into the output directory containing the application
 and all resource files and subprograms.
 
-`app-kernel/` is the desktop app responsible for spawning subprograms and restarting anything that fails.
+`app-kernel-desktop/` is the desktop app responsible for spawning subprograms and restarting anything that fails.
 
 `app-kernel-android/` builds the .apk file shipped to android devices, and it sets up environments for subprograms to execute on an android device.
 

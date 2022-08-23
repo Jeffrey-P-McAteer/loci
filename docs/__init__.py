@@ -51,11 +51,11 @@ def main(args=sys.argv):
   docs_contents.append(('App-Lib', j('app-lib', 'app_lib', 'index.html')))
 
   build_docs_from(
-    j('app-kernel'),
+    j('app-kernel-desktop'),
     ['cargo', 'doc', '--no-deps'],
-    j('app-kernel', 'target', 'doc'),
+    j('app-kernel-desktop', 'target', 'doc'),
   )
-  docs_contents.append(('App-Kernel (Desktop)', j('app-kernel', 'app_kernel', 'index.html')))
+  docs_contents.append(('App-Kernel (Desktop)', j('app-kernel-desktop', 'app_kernel', 'index.html')))
 
   build_docs_from(
     j('app-kernel-android'),

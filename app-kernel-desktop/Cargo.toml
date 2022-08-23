@@ -1,5 +1,5 @@
 [package]
-name = "app-kernel"
+name = "app-kernel-desktop"
 version = "0.1.0"
 authors = ["Jeffrey McAteer <jeffrey.p.mcateer@gmail.com>"]
 edition = "2018"

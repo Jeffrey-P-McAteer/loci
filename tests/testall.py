@@ -23,7 +23,7 @@ def run_all_tests(args):
         print('Deleting {}'.format(f))
         os.remove(f)
 
-  unit_test_cmd(j('app-kernel'), cargo_test_cmd + [package_arg, 'app-kernel'])
+  unit_test_cmd(j('app-kernel-desktop'), cargo_test_cmd + [package_arg, 'app-kernel-desktop'])
   unit_test_cmd(j('app-lib'),    cargo_test_cmd + [package_arg, 'app-lib'])
 
   unit_test_cmd(s('server-webgui'), cargo_test_cmd + [package_arg, 'server-webgui'])

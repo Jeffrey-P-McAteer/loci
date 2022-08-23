@@ -163,7 +163,7 @@ def get_sloc(repo_root, misc_measures):
   build_code += get_dir_sloc([j(repo_root, 'btool'), j(repo_root, 'docs'), j(repo_root, 'tests')])
   config_code += get_dir_sloc([j(repo_root, 'app-db-schemas'), j(repo_root, 'app-data-tkeys')])
   app_code += get_dir_sloc([
-    j(repo_root, 'app-kernel'), j(repo_root, 'app-kernel-android'), j(repo_root, 'app-lib'),
+    j(repo_root, 'app-kernel-desktop'), j(repo_root, 'app-kernel-android'), j(repo_root, 'app-lib'),
     j(repo_root, 'app-subprograms', 'desktop-cli'),
     j(repo_root, 'app-subprograms', 'desktop-mainwindow'),
     j(repo_root, 'app-subprograms', 'server-webgui'),
