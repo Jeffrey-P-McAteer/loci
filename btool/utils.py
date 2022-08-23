@@ -20,7 +20,7 @@ import pkgutil
 def maybe_install_w_pip(pip_package_name, import_name=None):
   if import_name is None:
     import_name = pip_package_name
-  pkg_l = pkgutil.find_loader(pip_package_name)
+  pkg_l = pkgutil.find_loader(import_name)
   if not pkg_l:
     print('WARNING: python package "{}" not found (could not import {}), attempting to install...'.format(pip_package_name, import_name))
     cmd = [sys.executable, '-m', 'pip', 'install', '--user', pip_package_name]
